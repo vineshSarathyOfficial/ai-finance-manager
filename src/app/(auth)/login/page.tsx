@@ -13,7 +13,7 @@ export default function LoginPage() {
         <div className="mb-6">
           <h1 className="heading-2 text-[var(--color-ink)] mb-1.5">Welcome back</h1>
           <p className="caption text-[var(--color-ink-muted)]">
-            Sign in to your Finance Manager account
+            Sign in to your FinPulse account
           </p>
         </div>
 

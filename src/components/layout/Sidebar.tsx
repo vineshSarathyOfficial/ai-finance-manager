@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logoutUser } from "@/actions/auth";
+import { Logo } from "@/components/ui/Logo";
 
 const navItems = [
   { href: "/dashboard",     label: "Dashboard",     icon: LayoutDashboard },
@@ -31,13 +32,10 @@ export function Sidebar() {
   return (
     <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-[var(--color-canvas)] border-r border-[var(--color-hairline)] fixed left-0 top-0 bottom-0 z-30">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 h-16 border-b border-[var(--color-hairline)]">
-        <div className="w-7 h-7 rounded-[var(--radius-md)] bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0">
-          <TrendingUp className="w-4 h-4 text-white" />
-        </div>
-        <span className="font-semibold text-[var(--color-ink)] text-[15px] tracking-tight">
-          Finance Manager
-        </span>
+      <div className="flex items-center px-5 h-16 border-b border-[var(--color-hairline)]">
+        <Link href="/dashboard" className="hover:opacity-90 transition-opacity">
+          <Logo size="md" brandName="FinPulse" />
+        </Link>
       </div>
 
       {/* Nav */}

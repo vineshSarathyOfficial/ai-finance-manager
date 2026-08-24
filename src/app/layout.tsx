@@ -3,11 +3,16 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Finance Manager — Track, Analyze, Grow",
-    template: "%s | Finance Manager",
+    default: "FinPulse — Smart Personal Finance & Wealth Tracking",
+    template: "%s | FinPulse",
   },
   description:
-    "A personal AI-powered finance manager to track income, expenses, and get smart insights on your spending.",
+    "An intelligent AI-powered personal finance manager. Track income, expenses, bank statements, and Gmail transactions with automatic insights.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -17,6 +22,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );
