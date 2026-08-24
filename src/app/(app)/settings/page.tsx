@@ -4,6 +4,7 @@ import { logoutUser } from "@/actions/auth";
 import { User, Lock, LogOut, Database } from "lucide-react";
 import { SettingsExportButton } from "@/components/settings/SettingsExportButton";
 import { SettingsDangerZone } from "@/components/settings/SettingsDangerZone";
+import { SettingsAiCard } from "@/components/settings/SettingsAiCard";
 import { GmailSyncCard } from "@/components/gmail/GmailSyncCard";
 import { getGmailConnectionStatusAction } from "@/actions/gmail";
 import { prisma } from "@/lib/db/prisma";
@@ -50,6 +51,9 @@ export default async function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* FinPulse AI Configuration Card */}
+      <SettingsAiCard />
 
       {/* Gmail Integration card */}
       <GmailSyncCard initialStatus={gmailStatus} />

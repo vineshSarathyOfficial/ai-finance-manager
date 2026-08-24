@@ -14,6 +14,7 @@ import { CategoryDonutChart } from "@/components/dashboard/CategoryDonutChart";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { InsightBanner } from "@/components/dashboard/InsightBanner";
 import { RecurringWidget } from "@/components/dashboard/RecurringWidget";
+import { DashboardAiCard } from "@/components/dashboard/DashboardAiCard";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -45,9 +46,13 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {insight && <InsightBanner message={insight} />}
-
+      {/* Summary Cards */}
       <SummaryCards summary={summary} />
+
+      {/* AI Financial Health Briefing Card */}
+      <DashboardAiCard />
+
+      {insight && <InsightBanner message={insight} />}
 
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         <div className="xl:col-span-3">

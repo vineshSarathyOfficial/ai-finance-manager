@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { AiFloatingTrigger } from "@/components/ai/AiFloatingTrigger";
 import { Toaster } from "sonner";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+
+      {/* Global AI Copilot Floating Button & Drawer */}
+      <AiFloatingTrigger />
+
       <Toaster
         position="top-right"
         toastOptions={{
