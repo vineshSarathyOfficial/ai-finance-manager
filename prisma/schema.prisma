@@ -33,6 +33,14 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Google / Gmail Integration
+  googleConnected    Boolean   @default(false)
+  googleEmail        String?
+  googleAccessToken  String?
+  googleRefreshToken String?
+  googleTokenExpiry  DateTime?
+  lastGmailSyncAt    DateTime?
+
   categories            Category[]
   transactions          Transaction[]
   statementImports      StatementImport[]
@@ -65,6 +73,8 @@ model Transaction {
   paymentMethod   String?
   notes           String?
   importId        String?
+  source          String?         @default("MANUAL")
+  emailMessageId  String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -72,6 +82,7 @@ model Transaction {
   category        Category         @relation(fields: [categoryId], references: [id])
   statementImport StatementImport? @relation(fields: [importId], references: [id])
 
+  @@index([userId, emailMessageId])
   @@index([userId, transactionDate])
   @@index([userId, categoryId])
 }

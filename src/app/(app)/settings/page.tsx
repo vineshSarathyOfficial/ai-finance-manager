@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { getRequiredSession } from "@/lib/auth/session";
 import { logoutUser } from "@/actions/auth";
-import { User, Lock, LogOut, Download, Trash2, Database } from "lucide-react";
+import { User, Lock, LogOut, Database } from "lucide-react";
 import { SettingsExportButton } from "@/components/settings/SettingsExportButton";
 import { SettingsDangerZone } from "@/components/settings/SettingsDangerZone";
+import { GmailSyncCard } from "@/components/gmail/GmailSyncCard";
+import { getGmailConnectionStatusAction } from "@/actions/gmail";
 import { prisma } from "@/lib/db/prisma";
 
 export const metadata: Metadata = {
   title: "Settings",
-  description: "Manage your account, preferences, and data.",
+  description: "Manage your account, preferences, and integrations.",
 };
 
 export const dynamic = "force-dynamic";
@@ -17,14 +19,17 @@ export default async function SettingsPage() {
   const session = await getRequiredSession();
   const user = session.user;
 
-  const txCount = await prisma.transaction.count({ where: { userId: user.id } });
+  const [txCount, gmailStatus] = await Promise.all([
+    prisma.transaction.count({ where: { userId: user.id } }),
+    getGmailConnectionStatusAction(),
+  ]);
 
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="heading-2 text-[var(--color-ink)]">Settings</h1>
         <p className="body-sm text-[var(--color-ink-muted)] mt-1">
-          Manage your account and preferences
+          Manage your account, preferences, and integrations
         </p>
       </div>
 
@@ -46,18 +51,8 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      {/* Security card */}
-      <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] shadow-level-1">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--color-hairline)]">
-          <Lock className="w-4 h-4 text-[var(--color-ink-faint)]" />
-          <h2 className="title text-[var(--color-ink)]">Security</h2>
-        </div>
-        <div className="px-5 py-4">
-          <p className="body-sm text-[var(--color-ink-muted)]">
-            Your password is hashed with bcrypt. To change your password, sign out and use account recovery (coming soon).
-          </p>
-        </div>
-      </div>
+      {/* Gmail Integration card */}
+      <GmailSyncCard initialStatus={gmailStatus} />
 
       {/* Data card */}
       <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] shadow-level-1">
@@ -73,6 +68,19 @@ export default async function SettingsPage() {
             </p>
           </div>
           <SettingsExportButton />
+        </div>
+      </div>
+
+      {/* Security card */}
+      <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] shadow-level-1">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--color-hairline)]">
+          <Lock className="w-4 h-4 text-[var(--color-ink-faint)]" />
+          <h2 className="title text-[var(--color-ink)]">Security</h2>
+        </div>
+        <div className="px-5 py-4">
+          <p className="body-sm text-[var(--color-ink-muted)]">
+            Your password is hashed with bcrypt. To change your password, sign out and use account recovery.
+          </p>
         </div>
       </div>
 
