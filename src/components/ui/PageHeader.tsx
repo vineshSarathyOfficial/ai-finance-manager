@@ -14,7 +14,7 @@ export function PageHeader({ title, description, action, className }: PageHeader
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3",
+        "flex flex-row items-start justify-between gap-3",
         !hasMobileContent && "hidden lg:flex",
         className
       )}
