@@ -7,6 +7,7 @@ import { AiAdvisorDrawer } from "@/components/ai/AiAdvisorDrawer";
 import { AddTransactionFab } from "@/components/transactions/AddTransactionFab";
 import { NavigationProvider } from "@/components/layout/NavigationProgress";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
+import { MobileSplash } from "@/components/pwa/MobileSplash";
 import { Toaster } from "sonner";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -14,6 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <AiCopilotProvider>
       <NavigationProvider>
         <div className="min-h-dvh bg-[var(--color-canvas-soft)]">
+          <MobileSplash />
           <Sidebar />
           <MobileHeader />
           <MobileNav />

@@ -27,7 +27,7 @@ const CustomTooltip = ({
 }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-[var(--color-hairline)] rounded-[var(--radius-lg)] p-3 shadow-level-2">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[var(--radius-lg)] p-3 shadow-level-2">
         <p className="eyebrow text-[var(--color-ink-muted)] mb-2">{label}</p>
         {payload.map((entry) => (
           <div key={entry.name} className="flex items-center gap-2 caption text-[var(--color-ink)]">

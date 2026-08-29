@@ -27,7 +27,7 @@ const CustomTooltip = ({
 }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-[var(--color-hairline)] rounded-[var(--radius-lg)] p-3 shadow-level-2">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[var(--radius-lg)] p-3 shadow-level-2">
         <p className="caption font-medium text-[var(--color-ink)]">
           {payload[0].payload.icon} {payload[0].name}
         </p>
