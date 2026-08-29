@@ -136,11 +136,12 @@ GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="your-client-secret"
 ```
 
-### 4. Push Database Schema & Seed
+### 4. Push Database Schema
 ```bash
 npx prisma db push
-npx prisma db seed
 ```
+
+Default categories are created automatically when a user registers.
 
 ### 5. Start Development Server
 ```bash

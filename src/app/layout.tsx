@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+
+const APP_NAME = "FinPulse";
 
 export const metadata: Metadata = {
   title: {
@@ -8,11 +10,29 @@ export const metadata: Metadata = {
   },
   description:
     "An intelligent AI-powered personal finance manager. Track income, expenses, bank statements, and Gmail transactions with automatic insights.",
-  icons: {
-    icon: "/icon.svg",
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
+  applicationName: APP_NAME,
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: APP_NAME,
   },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0075DE",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -22,9 +42,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

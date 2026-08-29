@@ -79,16 +79,6 @@ export default function LoginPage() {
             Create one
           </Link>
         </p>
-
-        <div className="mt-5 p-3.5 rounded-[var(--radius-md)] bg-[var(--color-canvas-soft)] border border-[var(--color-hairline)]">
-          <p className="eyebrow text-[var(--color-ink-muted)] uppercase mb-1">Demo account</p>
-          <p className="caption text-[var(--color-ink-muted)]">
-            Email: <span className="text-[var(--color-ink)] font-medium">demo@financemanager.app</span>
-          </p>
-          <p className="caption text-[var(--color-ink-muted)] mt-0.5">
-            Password: <span className="text-[var(--color-ink)] font-medium">demo1234!</span>
-          </p>
-        </div>
       </div>
     </div>
   );
