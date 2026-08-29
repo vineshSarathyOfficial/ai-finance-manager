@@ -364,9 +364,8 @@ export function TransactionTable({
         </table>
       </div>
 
-      {/* Mobile */}
       <div className="md:hidden space-y-2">
-        <div className="flex items-center justify-between px-1 py-1">
+        <div className="flex items-center justify-between px-1 py-0.5">
           <label className="flex items-center gap-2 body-sm text-[var(--color-ink-muted)]">
             <input
               type="checkbox"
@@ -377,10 +376,10 @@ export function TransactionTable({
               onChange={toggleSelectAllPage}
               className="w-4 h-4 accent-[var(--color-primary)]"
             />
-            Select all on page
+            Select all
           </label>
           {selectedIds.size > 0 && (
-            <button type="button" onClick={clearSelection} className="p-1 text-[var(--color-ink-faint)]">
+            <button type="button" onClick={clearSelection} className="p-2 text-[var(--color-ink-faint)]" aria-label="Clear selection">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -390,30 +389,35 @@ export function TransactionTable({
           <div
             key={t.id}
             className={cn(
-              "bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-4 shadow-level-1",
+              "bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-3 shadow-level-1",
               selectedIds.has(t.id) && "border-[var(--color-primary)] bg-[var(--color-primary-bg-subdued)]/30"
             )}
           >
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2.5">
               <input
                 type="checkbox"
                 checked={selectedIds.has(t.id)}
                 onChange={() => toggleRow(t.id)}
-                className="mt-1 w-4 h-4 flex-shrink-0 accent-[var(--color-primary)]"
+                className="mt-1.5 w-4 h-4 flex-shrink-0 accent-[var(--color-primary)]"
+                aria-label={`Select ${t.description}`}
               />
-              <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={() => setEditTarget(t)}
+                className="flex-1 min-w-0 flex items-start justify-between gap-2 text-left"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
                   <div
                     className={cn(
-                      "w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center text-base flex-shrink-0",
+                      "w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center text-sm flex-shrink-0",
                       t.type === "INCOME" ? "bg-[var(--color-income-bg)]" : "bg-[var(--color-expense-bg)]"
                     )}
                   >
                     {t.category.icon || "💸"}
                   </div>
                   <div className="min-w-0">
-                    <p className="body-sm text-[var(--color-ink)] font-medium truncate">{t.description}</p>
-                    <p className="caption text-[var(--color-ink-faint)]">
+                    <p className="body-sm text-[var(--color-ink)] font-medium truncate">{t.merchantName || t.description}</p>
+                    <p className="caption text-[var(--color-ink-faint)] truncate">
                       {t.category.name} · {formatDate(t.transactionDate)}
                     </p>
                   </div>
@@ -429,25 +433,19 @@ export function TransactionTable({
                     {formatCurrency(t.amount)}
                   </p>
                   {t.paymentMethod && (
-                    <p className="caption text-[var(--color-ink-faint)] mt-0.5">{t.paymentMethod}</p>
+                    <p className="caption text-[var(--color-ink-faint)] mt-0.5 max-w-[6.5rem] truncate ml-auto">
+                      {t.paymentMethod}
+                    </p>
                   )}
                 </div>
-              </div>
-            </div>
-            <div className="flex gap-2 mt-3 pt-3 border-t border-[var(--color-hairline)] ml-7">
-              <button
-                type="button"
-                onClick={() => setEditTarget(t)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] caption text-[var(--color-ink-muted)] hover:bg-[var(--color-canvas-soft)]"
-              >
-                <Pencil className="w-3 h-3" /> Edit
               </button>
               <button
                 type="button"
                 onClick={() => setDeleteId(t.id)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] caption text-[var(--color-error)] hover:bg-[var(--color-error-bg)]"
+                className="mt-0.5 w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-faint)] hover:bg-[var(--color-error-bg)] hover:text-[var(--color-error)] flex-shrink-0"
+                aria-label="Delete transaction"
               >
-                <Trash2 className="w-3 h-3" /> Delete
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -455,11 +453,11 @@ export function TransactionTable({
       </div>
 
       {pageCount > 1 && (
-        <div className="flex items-center justify-between bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] px-4 py-3 shadow-level-1">
-          <span className="caption text-[var(--color-ink-muted)]">
-            Page {filters.page} of {pageCount} · {total} total
+        <div className="flex items-center justify-between gap-2 bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] px-3 sm:px-4 py-3 shadow-level-1">
+          <span className="caption text-[var(--color-ink-muted)] truncate">
+            {filters.page}/{pageCount} · {total}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <button
               type="button"
               onClick={() => navigatePage(filters.page - 1)}

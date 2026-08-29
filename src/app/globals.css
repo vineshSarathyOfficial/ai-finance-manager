@@ -104,6 +104,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
   }
 
   body {
@@ -113,6 +114,9 @@
     font-weight: 400;
     line-height: 1.33;
     font-feature-settings: "lnum", "locl";
+    min-height: 100dvh;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
   }
 
   ::-webkit-scrollbar {
@@ -283,4 +287,42 @@
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  @keyframes nav-indeterminate {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(420%);
+    }
+  }
+  .animate-nav-indeterminate {
+    animation: nav-indeterminate 1s ease-in-out infinite;
+  }
+}
+
+@media (max-width: 1023px) {
+  .display-1 { font-size: 40px; letter-spacing: -1px; }
+  .display-2,
+  .display-xxl { font-size: 32px; letter-spacing: -0.75px; }
+  .display-xl,
+  .display-lg,
+  .heading-1 { font-size: 28px; letter-spacing: -0.5px; }
+  .display-md,
+  .heading-2 { font-size: 22px; letter-spacing: -0.35px; }
+  .display-sm,
+  .heading-3,
+  .heading-lg { font-size: 20px; }
+  .heading-md,
+  .heading-sm,
+  .title,
+  .title-md { font-size: 17px; letter-spacing: 0; }
 }

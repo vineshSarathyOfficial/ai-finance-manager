@@ -43,7 +43,7 @@ export default async function DashboardPage() {
   const monthLabel = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric" }).format(new Date());
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="Dashboard"
         description={monthLabel}
@@ -61,7 +61,7 @@ export default async function DashboardPage() {
 
       {insights.length > 0 && <InsightsList insights={insights} compact />}
 
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 lg:gap-6 items-start">
         <div className="xl:col-span-3 min-w-0">
           <MonthlyTrendChart data={trend} />
         </div>
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
       </div>
 
       {ccSummary ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 items-start">
           <div className="lg:col-span-2 min-w-0">
             <RecentTransactions transactions={recentTransactions} />
           </div>

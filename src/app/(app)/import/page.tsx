@@ -24,7 +24,7 @@ export default async function ImportPage() {
   ]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 lg:space-y-8">
       <PageHeader
         title="Import & Sync"
         description="Sync from Gmail or upload CSV / PDF bank and credit card statements"

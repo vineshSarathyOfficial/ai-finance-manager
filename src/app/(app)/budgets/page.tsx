@@ -15,7 +15,7 @@ export default async function BudgetsPage() {
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="Budgets"
         description="Set monthly spending limits by category"

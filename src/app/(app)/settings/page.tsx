@@ -28,7 +28,7 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-4 lg:space-y-6 max-w-2xl">
       <PageHeader
         title="Settings"
         description="Manage your account, preferences, and integrations"

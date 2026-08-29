@@ -54,7 +54,7 @@ export function StatCard({
   const content = (
     <div
       className={cn(
-        "bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-5 sm:p-6 flex flex-col gap-2 transition-shadow",
+        "bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-3.5 sm:p-5 lg:p-6 flex flex-col gap-1.5 sm:gap-2 min-w-0 transition-shadow",
         href && "hover:shadow-level-1 cursor-pointer",
         className
       )}
@@ -62,12 +62,12 @@ export function StatCard({
       <div className="flex items-center justify-between">
         <span className="caption text-[var(--color-ink-muted)]">{label}</span>
         {Icon && (
-          <div className={cn("w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center", styles.icon)}>
-            <Icon className="w-4 h-4" />
+          <div className={cn("w-7 h-7 sm:w-9 sm:h-9 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0", styles.icon)}>
+            <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
         )}
       </div>
-      <p className={cn("heading-2 tabular-nums", styles.value)}>{formatted}</p>
+      <p className={cn("heading-2 tabular-nums break-words leading-tight", styles.value)}>{formatted}</p>
       {change && (
         <p
           className={cn(

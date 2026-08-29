@@ -37,7 +37,7 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
       <div
         className={cn(
           "relative w-full sm:max-w-md bg-[var(--color-canvas)] rounded-t-[var(--radius-lg)] sm:rounded-[var(--radius-md)]",
-          "shadow-card max-h-[90vh] overflow-y-auto safe-area-bottom",
+          "shadow-card max-h-[90dvh] overflow-y-auto safe-area-bottom",
           "animate-in slide-in-from-bottom duration-200",
           className
         )}

@@ -13,7 +13,7 @@ export default async function InsightsPage() {
   const insights = await generateInsights(userId, 20);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="Insights"
         description="Actionable observations based on your transaction data"

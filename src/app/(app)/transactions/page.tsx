@@ -48,7 +48,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <PageHeader
         title="Transactions"
         description={`${total} transaction${total !== 1 ? "s" : ""} found`}

@@ -32,7 +32,7 @@ export function FilterSheet({ activeCount, onClear, children }: FilterSheetProps
       </Button>
 
       <Sheet open={open} onClose={() => setOpen(false)} title="Filters">
-        <div className="space-y-4">{children}</div>
+        <div className="space-y-3 flex flex-col">{children}</div>
         <div className="flex gap-3 mt-6 pt-4 border-t border-[var(--color-hairline)]">
           {activeCount > 0 && (
             <Button variant="ghost" size="sm" onClick={onClear} fullWidth>

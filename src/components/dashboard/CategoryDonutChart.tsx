@@ -1,6 +1,6 @@
 "use client";
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 
 interface CategoryDonutChartProps {
@@ -44,46 +44,49 @@ export function CategoryDonutChart({ data }: CategoryDonutChartProps) {
   const isEmpty = data.length === 0;
 
   return (
-    <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-5 shadow-level-1">
-      <h2 className="title text-[var(--color-ink)] mb-4">Expenses by Category</h2>
+    <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-4 sm:p-5 shadow-level-1 min-w-0">
+      <h2 className="title text-[var(--color-ink)] mb-3 sm:mb-4">Expenses by Category</h2>
       {isEmpty ? (
-        <div className="flex items-center justify-center h-52 text-[var(--color-ink-faint)] caption">
+        <div className="flex items-center justify-center h-40 sm:h-52 text-[var(--color-ink-faint)] caption">
           No expenses this month.
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={240}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="45%"
-              innerRadius={60}
-              outerRadius={90}
-              paddingAngle={2}
-              dataKey="amount"
-              nameKey="name"
-            >
-              {data.map((_, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                  stroke="transparent"
+        <>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={48}
+                outerRadius={72}
+                paddingAngle={2}
+                dataKey="amount"
+                nameKey="name"
+              >
+                {data.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    stroke="transparent"
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+          <ul className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 mt-2">
+            {data.map((item, index) => (
+              <li key={item.name} className="flex items-center gap-1.5 caption text-[var(--color-ink-muted)]">
+                <span
+                  className="inline-block w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
                 />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              layout="vertical"
-              align="right"
-              verticalAlign="middle"
-              iconType="circle"
-              iconSize={8}
-              formatter={(value: string) => (
-                <span style={{ fontSize: "12px", color: "var(--color-ink-muted)" }}>{value}</span>
-              )}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+                <span className="truncate max-w-[9rem]">{item.icon} {item.name}</span>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );

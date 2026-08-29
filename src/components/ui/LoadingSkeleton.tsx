@@ -34,3 +34,22 @@ export function TableRowSkeleton({ cols = 4 }: { cols?: number }) {
     </div>
   );
 }
+
+export function PageSkeleton() {
+  return (
+    <div className="space-y-4 lg:space-y-6 animate-pulse" aria-busy="true" aria-live="polite">
+      <div className="h-5 w-40 bg-[var(--color-surface-strong)] rounded-[var(--radius-sm)] hidden lg:block" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <StatCardSkeleton key={i} />
+        ))}
+      </div>
+      <Skeleton className="h-48 sm:h-64 w-full rounded-[var(--radius-lg)]" />
+      <div className="space-y-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-[var(--radius-lg)]" />
+        ))}
+      </div>
+    </div>
+  );
+}

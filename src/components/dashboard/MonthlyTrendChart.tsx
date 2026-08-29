@@ -49,15 +49,15 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
   const isEmpty = data.every((d) => d.income === 0 && d.expenses === 0);
 
   return (
-    <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-5 shadow-level-1 h-full">
-      <h2 className="title text-[var(--color-ink)] mb-4">Monthly Trend</h2>
+    <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-4 sm:p-5 shadow-level-1 h-full min-w-0">
+      <h2 className="title text-[var(--color-ink)] mb-3 sm:mb-4">Monthly Trend</h2>
       {isEmpty ? (
-        <div className="flex items-center justify-center h-52 text-[var(--color-ink-faint)] caption">
+        <div className="flex items-center justify-center h-40 sm:h-52 text-[var(--color-ink-faint)] caption">
           No data yet. Add transactions to see your trend.
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} barGap={4} barCategoryGap="30%">
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={data} barGap={4} barCategoryGap="20%" margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="var(--color-hairline)"
@@ -76,7 +76,7 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
               tick={{ fontSize: 12, fill: "var(--color-ink-faint)" }}
               axisLine={false}
               tickLine={false}
-              width={56}
+              width={40}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-canvas-soft)" }} />
             <Legend

@@ -69,11 +69,11 @@ export function RecurringSummaryCards({ summary }: Props) {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
       {cards.map(({ label, value, sub, icon: Icon, iconColor, bg, gradient, alert }) => (
         <div
           key={label}
-          className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 shadow-level-1"
+          className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-3.5 sm:p-5 shadow-level-1"
         >
           <div className={`absolute inset-0 bg-gradient-to-br ${gradient} pointer-events-none`} />
           <div className="relative">
@@ -81,7 +81,7 @@ export function RecurringSummaryCards({ summary }: Props) {
               <Icon className={`w-4.5 h-4.5 ${iconColor}`} />
             </div>
             <div className="flex items-start gap-1">
-              <p className="heading-md body-tabular text-[var(--color-ink)] leading-none">{value}</p>
+              <p className="heading-md body-tabular text-[var(--color-ink)] leading-tight break-words">{value}</p>
               {alert && <AlertTriangle className="w-3.5 h-3.5 text-[var(--color-warning)] mt-0.5 flex-shrink-0" />}
             </div>
             <p className="caption text-[var(--color-ink-muted)] mt-1">{label}</p>

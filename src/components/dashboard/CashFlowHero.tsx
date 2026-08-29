@@ -18,8 +18,8 @@ export function CashFlowHero({ summary, expenseChange }: CashFlowHeroProps) {
   const dateTo = now.toISOString().slice(0, 10);
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="space-y-3 sm:space-y-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <StatCard
           label="Income"
           value={summary.incomeThisMonth}
@@ -53,7 +53,7 @@ export function CashFlowHero({ summary, expenseChange }: CashFlowHeroProps) {
         />
       </div>
 
-      <div className="bg-[var(--color-canvas-soft)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-4 sm:p-5 flex items-center justify-between">
+      <div className="bg-[var(--color-canvas-soft)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-3 sm:p-5 flex items-center justify-between gap-2 min-w-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-surface)] border border-[var(--color-hairline)] flex items-center justify-center">
             <ArrowLeftRight className="w-5 h-5 text-[var(--color-ink-muted)]" />

@@ -36,7 +36,7 @@ export default async function CreditCardsPage({ searchParams }: PageProps) {
 
   if (!ccSummary) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-6">
         <PageHeader title="Credit Cards" description="Track credit card spending and trends" />
         <EmptyState
           icon={CreditCard}
@@ -75,14 +75,14 @@ export default async function CreditCardsPage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="Credit Cards"
         description={`${ccSummary.cardCount} card${ccSummary.cardCount !== 1 ? "s" : ""} · ${new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric" }).format(now)}`}
       />
 
       {ccSummary.cards.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-none">
           <Link
             href="/credit-cards"
             className={`flex-shrink-0 px-4 py-2 rounded-[var(--radius-full)] body-sm border ${!cardId ? "bg-[var(--color-ink)] text-white border-[var(--color-ink)]" : "border-[var(--color-hairline)] text-[var(--color-ink-muted)]"}`}

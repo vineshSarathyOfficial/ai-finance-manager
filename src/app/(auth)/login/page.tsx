@@ -9,7 +9,7 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-[420px]">
-      <div className="bg-[var(--color-surface)] rounded-[var(--radius-xl)] border border-[var(--color-hairline)] p-8 shadow-level-1">
+      <div className="bg-[var(--color-surface)] rounded-[var(--radius-xl)] border border-[var(--color-hairline)] p-5 sm:p-8 shadow-level-1">
         <div className="mb-6">
           <h1 className="heading-2 text-[var(--color-ink)] mb-1.5">Welcome back</h1>
           <p className="caption text-[var(--color-ink-muted)]">

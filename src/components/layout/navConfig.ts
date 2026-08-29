@@ -3,7 +3,6 @@ import {
   ArrowLeftRight,
   BarChart3,
   RotateCcw,
-  MoreHorizontal,
   UploadCloud,
   Tag,
   Settings,
@@ -45,3 +44,25 @@ export const allNavItems = [...primaryNavItems, ...secondaryNavItems];
 export const mobileTabItems = primaryNavItems.filter((item) => item.mobileTab);
 
 export const moreMenuItems = secondaryNavItems.filter((item) => item.moreMenu);
+
+const pageTitles: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/transactions": "Transactions",
+  "/analytics": "Analytics",
+  "/subscriptions": "Recurring",
+  "/insights": "Insights",
+  "/accounts": "Accounts",
+  "/credit-cards": "Credit Cards",
+  "/budgets": "Budgets",
+  "/import": "Import",
+  "/categories": "Categories",
+  "/settings": "Settings",
+};
+
+export function getPageTitle(pathname: string): string {
+  return (
+    Object.entries(pageTitles).find(([path]) => pathname.startsWith(path))?.[1] ??
+    allNavItems.find((item) => pathname.startsWith(item.href))?.label ??
+    "FinPulse"
+  );
+}

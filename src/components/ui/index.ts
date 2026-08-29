@@ -5,7 +5,7 @@ export { StatCard } from "./StatCard";
 export { PageHeader } from "./PageHeader";
 export { Badge } from "./Badge";
 export { EmptyState } from "./EmptyState";
-export { Skeleton, StatCardSkeleton, TableRowSkeleton } from "./LoadingSkeleton";
+export { Skeleton, StatCardSkeleton, TableRowSkeleton, PageSkeleton } from "./LoadingSkeleton";
 export { Sheet, Dialog, ConfirmDialog } from "./Sheet";
 export { Tabs, TabPanel } from "./Tabs";
 export { FilterSheet, FilterBar } from "./FilterSheet";

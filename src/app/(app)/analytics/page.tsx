@@ -43,7 +43,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="Analytics"
         description="Spending patterns and trends across your transactions"
