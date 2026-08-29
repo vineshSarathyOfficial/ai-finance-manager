@@ -65,15 +65,15 @@ export function AddTransactionFab() {
         <Plus className="w-5 h-5" strokeWidth={2.5} />
       </button>
 
-      {open && categories && accounts && (
+      {open && categories && accounts ? (
         <TransactionFormModal
-          open
+          open={open}
           onClose={() => setOpen(false)}
           categories={categories}
           accounts={accounts}
           mode="create"
         />
-      )}
+      ) : null}
     </>
   );
 }

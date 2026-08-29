@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { UploadCloud } from "lucide-react";
 import { getRequiredUserId } from "@/lib/auth/session";
 import { getTransactions } from "@/lib/db/transactions";
 import { getCategories } from "@/lib/db/categories";
 import { getAccounts } from "@/lib/db/accounts";
 import { transactionFiltersSchema } from "@/lib/validations/transaction";
-import { TransactionTable } from "@/components/transactions/TransactionTable";
-import { TransactionFilters } from "@/components/transactions/TransactionFilters";
-import { AddTransactionButton } from "@/components/transactions/AddTransactionButton";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { Button } from "@/components/ui/Button";
+import { TransactionsView } from "@/components/transactions/TransactionsView";
 
 export const metadata: Metadata = { title: "Transactions" };
 
@@ -48,35 +42,13 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <PageHeader
-        title="Transactions"
-        description={`${total} transaction${total !== 1 ? "s" : ""} found`}
-        action={
-          <div className="flex items-center gap-2">
-            <Link href="/import" className="hidden sm:block">
-              <Button variant="secondary" size="sm">
-                <UploadCloud className="w-4 h-4" />
-                Import
-              </Button>
-            </Link>
-            <div className="hidden sm:block">
-              <AddTransactionButton categories={categories} accounts={accounts} />
-            </div>
-          </div>
-        }
-      />
-
-      <TransactionFilters categories={categories} accounts={accounts} filters={filters} />
-
-      <TransactionTable
-        transactions={transactions}
-        categories={categories}
-        accounts={accounts}
-        filters={filters}
-        total={total}
-        pageCount={pageCount}
-      />
-    </div>
+    <TransactionsView
+      initialTransactions={transactions}
+      initialTotal={total}
+      pageCount={pageCount}
+      categories={categories}
+      accounts={accounts}
+      filters={filters}
+    />
   );
 }

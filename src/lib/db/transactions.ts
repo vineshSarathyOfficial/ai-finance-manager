@@ -134,7 +134,8 @@ export async function createTransaction(
   }
 ) {
   const classification = classifyTransaction(data.description, data.type, data.paymentMethod);
-  const defaultAccount = await getOrCreateDefaultAccount(userId);
+  const accountId =
+    data.accountId ?? (await getOrCreateDefaultAccount(userId)).id;
 
   const tx = await prisma.transaction.create({
     data: {
@@ -146,7 +147,7 @@ export async function createTransaction(
       transactionDate: new Date(data.transactionDate),
       paymentMethod: data.paymentMethod || null,
       notes: data.notes || null,
-      accountId: data.accountId || defaultAccount.id,
+      accountId,
       merchantName: classification.merchantName,
       transactionKind: data.transactionKind || classification.kind,
       excludeFromTotals: data.excludeFromTotals ?? classification.excludeFromTotals,
@@ -172,7 +173,10 @@ export async function updateTransaction(
     excludeFromTotals?: boolean;
   }
 ) {
-  const existing = await prisma.transaction.findFirst({ where: { id, userId } });
+  const existing = await prisma.transaction.findFirst({
+    where: { id, userId },
+    select: { id: true },
+  });
   if (!existing) return null;
 
   const classification = classifyTransaction(data.description, data.type, data.paymentMethod);

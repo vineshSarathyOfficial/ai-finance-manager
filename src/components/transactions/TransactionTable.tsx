@@ -20,16 +20,19 @@ import {
   TypeColumnFilter,
 } from "./TransactionColumnHeader";
 import type { Category, SerializedTransaction, Account } from "@/types/finance";
+import type { OptimisticTransaction } from "@/lib/transactions/optimistic";
 import type { TransactionFilters } from "@/lib/validations/transaction";
 import { cn } from "@/lib/utils";
 
 interface TransactionTableProps {
-  transactions: SerializedTransaction[];
+  transactions: OptimisticTransaction[];
   categories: Category[];
   accounts: Account[];
   filters: TransactionFilters;
   total: number;
   pageCount: number;
+  onTransactionDeleted?: (id: string) => void;
+  onBulkDeleted?: (ids: string[]) => void;
 }
 
 export function TransactionTable({
@@ -39,10 +42,13 @@ export function TransactionTable({
   filters,
   total,
   pageCount,
+  onTransactionDeleted,
+  onBulkDeleted,
 }: TransactionTableProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [editTarget, setEditTarget] = useState<SerializedTransaction | null>(null);
+  const [editTarget, setEditTarget] = useState<OptimisticTransaction | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -117,6 +123,7 @@ export function TransactionTable({
     setDeleteId(null);
     if (result?.success) {
       toast.success(result.message);
+      onTransactionDeleted?.(deleteId);
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(deleteId);
@@ -134,6 +141,7 @@ export function TransactionTable({
     setBulkDeleteOpen(false);
     if (result?.success) {
       toast.success(result.message);
+      onBulkDeleted?.(ids);
       clearSelection();
     } else {
       toast.error(result?.message ?? "Bulk delete failed.");
@@ -302,7 +310,8 @@ export function TransactionTable({
                 key={t.id}
                 className={cn(
                   "hover:bg-[var(--color-canvas-soft)] transition-colors group",
-                  selectedIds.has(t.id) && "bg-[var(--color-primary-bg-subdued)]/40"
+                  selectedIds.has(t.id) && "bg-[var(--color-primary-bg-subdued)]/40",
+                  t.isPending && "opacity-70"
                 )}
               >
                 <td className="px-4 py-3.5">
@@ -319,6 +328,9 @@ export function TransactionTable({
                 </td>
                 <td className="px-4 py-3.5 body-sm text-[var(--color-ink)] max-w-[200px]">
                   <span className="truncate block">{t.merchantName || t.description}</span>
+                  {t.isPending && (
+                    <span className="caption text-[var(--color-ink-faint)]">Saving…</span>
+                  )}
                   {kindBadge((t as SerializedTransaction & { transactionKind?: string }).transactionKind)}
                 </td>
                 <td className="px-4 py-3.5">
@@ -344,16 +356,23 @@ export function TransactionTable({
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
-                      onClick={() => setEditTarget(t)}
-                      className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:bg-[var(--color-canvas-soft)] hover:text-[var(--color-primary)] transition-colors"
+                      onClick={() => {
+                        if (!t.isPending) {
+                          setEditTarget(t);
+                          setEditOpen(true);
+                        }
+                      }}
+                      disabled={t.isPending}
+                      className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:bg-[var(--color-canvas-soft)] hover:text-[var(--color-primary)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
                       aria-label="Edit transaction"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDeleteId(t.id)}
-                      className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:bg-[var(--color-error-bg)] hover:text-[var(--color-error)] transition-colors"
+                      onClick={() => !t.isPending && setDeleteId(t.id)}
+                      disabled={t.isPending}
+                      className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:bg-[var(--color-error-bg)] hover:text-[var(--color-error)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
                       aria-label="Delete transaction"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -392,7 +411,8 @@ export function TransactionTable({
             key={t.id}
             className={cn(
               "bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-3 shadow-level-1",
-              selectedIds.has(t.id) && "border-[var(--color-primary)] bg-[var(--color-primary-bg-subdued)]/30"
+              selectedIds.has(t.id) && "border-[var(--color-primary)] bg-[var(--color-primary-bg-subdued)]/30",
+              t.isPending && "opacity-70"
             )}
           >
             <div className="flex items-start gap-2.5">
@@ -400,13 +420,20 @@ export function TransactionTable({
                 type="checkbox"
                 checked={selectedIds.has(t.id)}
                 onChange={() => toggleRow(t.id)}
+                disabled={t.isPending}
                 className="mt-1.5 w-4 h-4 flex-shrink-0 accent-[var(--color-primary)]"
                 aria-label={`Select ${t.description}`}
               />
               <button
                 type="button"
-                onClick={() => setEditTarget(t)}
-                className="flex-1 min-w-0 flex items-start justify-between gap-2 text-left"
+                onClick={() => {
+                  if (!t.isPending) {
+                    setEditTarget(t);
+                    setEditOpen(true);
+                  }
+                }}
+                disabled={t.isPending}
+                className="flex-1 min-w-0 flex items-start justify-between gap-2 text-left disabled:cursor-default"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
@@ -420,6 +447,7 @@ export function TransactionTable({
                   <div className="min-w-0">
                     <p className="body-sm text-[var(--color-ink)] font-medium truncate">{t.merchantName || t.description}</p>
                     <p className="caption text-[var(--color-ink-faint)] truncate">
+                      {t.isPending ? "Saving… · " : ""}
                       {t.category.name} · {formatDate(t.transactionDate)}
                     </p>
                   </div>
@@ -500,8 +528,12 @@ export function TransactionTable({
 
       {editTarget && (
         <TransactionFormModal
-          open={!!editTarget}
-          onClose={() => setEditTarget(null)}
+          open={editOpen}
+          onClose={() => {
+            setEditOpen(false);
+            setEditTarget(null);
+          }}
+          onDismiss={() => setEditOpen(false)}
           categories={categories}
           accounts={accounts}
           mode="edit"

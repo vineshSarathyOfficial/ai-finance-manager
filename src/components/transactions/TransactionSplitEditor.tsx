@@ -16,6 +16,7 @@ interface TransactionSplitEditorProps {
   type: "INCOME" | "EXPENSE";
   initialSplits: { categoryId: string; amount: number }[];
   onChange: (splits: { categoryId: string; amount: number }[]) => void;
+  onEnabledChange?: (enabled: boolean) => void;
 }
 
 export function TransactionSplitEditor({
@@ -24,6 +25,7 @@ export function TransactionSplitEditor({
   type,
   initialSplits,
   onChange,
+  onEnabledChange,
 }: TransactionSplitEditorProps) {
   const [enabled, setEnabled] = useState(initialSplits.length > 0);
   const [rows, setRows] = useState<SplitRow[]>(
@@ -35,6 +37,7 @@ export function TransactionSplitEditor({
   const filteredCategories = categories.filter((c) => c.type === type);
 
   useEffect(() => {
+    onEnabledChange?.(enabled);
     if (!enabled) {
       onChange([]);
       return;
@@ -43,7 +46,7 @@ export function TransactionSplitEditor({
       .filter((r) => r.categoryId && r.amount && !isNaN(parseFloat(r.amount)))
       .map((r) => ({ categoryId: r.categoryId, amount: parseFloat(r.amount) }));
     onChange(splits);
-  }, [enabled, rows, onChange]);
+  }, [enabled, rows, onChange, onEnabledChange]);
 
   const splitTotal = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
   const remaining = Math.round((totalAmount - splitTotal) * 100) / 100;

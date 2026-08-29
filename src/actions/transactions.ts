@@ -12,11 +12,11 @@ import {
   createTransactionSchema,
   updateTransactionSchema,
 } from "@/lib/validations/transaction";
-import { createCategoryRule } from "@/lib/db/category-rules";
 import { saveTransactionSplits } from "@/lib/db/splits";
+import type { SerializedTransaction } from "@/types/finance";
 
 type ActionState =
-  | { success: true; message: string }
+  | { success: true; message: string; transaction?: SerializedTransaction }
   | { success: false; message: string; errors?: Record<string, string[]> }
   | undefined;
 
@@ -42,21 +42,13 @@ export async function createTransactionAction(
   }
 
   try {
-    await dbCreate(userId, parsed.data);
-
-    if (formData.get("saveAsRule") === "on") {
-      await createCategoryRule(userId, {
-        keyword: parsed.data.description.trim().slice(0, 80),
-        categoryId: parsed.data.categoryId,
-        type: parsed.data.type,
-      }).catch(() => null);
+    const transaction = await dbCreate(userId, parsed.data);
+    if (!transaction) {
+      return { success: false, message: "Failed to create transaction. Please try again." };
     }
 
     revalidatePath("/dashboard");
-    revalidatePath("/transactions");
-    revalidatePath("/analytics");
-    revalidatePath("/categories");
-    return { success: true, message: "Transaction added successfully." };
+    return { success: true, message: "Transaction added successfully.", transaction };
   } catch {
     return { success: false, message: "Failed to create transaction. Please try again." };
   }
@@ -90,32 +82,23 @@ export async function updateTransactionAction(
       return { success: false, message: "Transaction not found." };
     }
 
-    if (formData.get("saveAsRule") === "on") {
-      await createCategoryRule(userId, {
-        keyword: parsed.data.description.trim().slice(0, 80),
-        categoryId: parsed.data.categoryId,
-        type: parsed.data.type,
-      }).catch(() => null);
-    }
-
-    const splitsJson = formData.get("splitsJson");
-    if (typeof splitsJson === "string" && splitsJson) {
-      try {
-        const splits = JSON.parse(splitsJson) as { categoryId: string; amount: number }[];
-        const splitResult = await saveTransactionSplits(parsed.data.id, userId, splits);
-        if (splitResult.error) {
-          return { success: false, message: splitResult.error };
+    if (formData.get("manageSplits") === "on") {
+      const splitsJson = formData.get("splitsJson");
+      if (typeof splitsJson === "string") {
+        try {
+          const splits = JSON.parse(splitsJson) as { categoryId: string; amount: number }[];
+          const splitResult = await saveTransactionSplits(parsed.data.id, userId, splits);
+          if (splitResult.error) {
+            return { success: false, message: splitResult.error };
+          }
+        } catch {
+          return { success: false, message: "Invalid split data." };
         }
-      } catch {
-        return { success: false, message: "Invalid split data." };
       }
     }
 
     revalidatePath("/dashboard");
-    revalidatePath("/transactions");
-    revalidatePath("/analytics");
-    revalidatePath("/categories");
-    return { success: true, message: "Transaction updated successfully." };
+    return { success: true, message: "Transaction updated successfully.", transaction: result };
   } catch {
     return { success: false, message: "Failed to update transaction. Please try again." };
   }
@@ -130,8 +113,6 @@ export async function deleteTransactionAction(id: string): Promise<ActionState> 
       return { success: false, message: "Transaction not found." };
     }
     revalidatePath("/dashboard");
-    revalidatePath("/transactions");
-    revalidatePath("/analytics");
     return { success: true, message: "Transaction deleted." };
   } catch {
     return { success: false, message: "Failed to delete transaction. Please try again." };
@@ -154,8 +135,6 @@ export async function bulkDeleteTransactionsAction(ids: string[]): Promise<Actio
   try {
     const result = await dbBulkDelete(userId, ids);
     revalidatePath("/dashboard");
-    revalidatePath("/transactions");
-    revalidatePath("/analytics");
     return {
       success: true,
       message: `Deleted ${result.count} transaction${result.count === 1 ? "" : "s"}.`,
