@@ -2,6 +2,18 @@ import type { Category, SerializedTransaction } from "@/types/finance";
 
 export type OptimisticTransaction = SerializedTransaction & { isPending?: boolean };
 
+export function transactionsMatch(
+  a: Pick<SerializedTransaction, "description" | "amount" | "type" | "categoryId">,
+  b: Pick<SerializedTransaction, "description" | "amount" | "type" | "categoryId">
+) {
+  return (
+    a.description === b.description &&
+    a.amount === b.amount &&
+    a.type === b.type &&
+    a.categoryId === b.categoryId
+  );
+}
+
 export function buildOptimisticTransaction(
   formData: FormData,
   categories: Category[],

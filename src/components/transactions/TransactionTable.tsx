@@ -31,8 +31,9 @@ interface TransactionTableProps {
   filters: TransactionFilters;
   total: number;
   pageCount: number;
-  onTransactionDeleted?: (id: string) => void;
-  onBulkDeleted?: (ids: string[]) => void;
+  onTransactionDeleted?: (transaction: OptimisticTransaction) => void;
+  onTransactionRestored?: (transaction: OptimisticTransaction) => void;
+  onBulkDeleted?: (transactions: OptimisticTransaction[]) => void;
 }
 
 export function TransactionTable({
@@ -43,13 +44,14 @@ export function TransactionTable({
   total,
   pageCount,
   onTransactionDeleted,
+  onTransactionRestored,
   onBulkDeleted,
 }: TransactionTableProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [editTarget, setEditTarget] = useState<OptimisticTransaction | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<OptimisticTransaction | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -116,34 +118,71 @@ export function TransactionTable({
   const clearSelection = () => setSelectedIds(new Set());
 
   const handleDelete = async () => {
-    if (!deleteId) return;
+    if (!deleteTarget) return;
+
+    const target = deleteTarget;
+    const isOptimisticOnly = target.id.startsWith("optimistic-");
+
     setDeleting(true);
-    const result = await deleteTransactionAction(deleteId);
-    setDeleting(false);
-    setDeleteId(null);
-    if (result?.success) {
-      toast.success(result.message);
-      onTransactionDeleted?.(deleteId);
+    setDeleteTarget(null);
+    onTransactionDeleted?.(target);
+
+    if (isOptimisticOnly) {
+      setDeleting(false);
       setSelectedIds((prev) => {
         const next = new Set(prev);
-        next.delete(deleteId);
+        next.delete(target.id);
         return next;
       });
-    } else toast.error(result?.message ?? "Delete failed.");
+      toast.success("Transaction removed.");
+      return;
+    }
+
+    const result = await deleteTransactionAction(target.id);
+    setDeleting(false);
+
+    if (result?.success) {
+      toast.success(result.message);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(target.id);
+        return next;
+      });
+    } else {
+      onTransactionRestored?.(target);
+      toast.error(result?.message ?? "Delete failed.");
+    }
   };
 
   const handleBulkDelete = async () => {
-    const ids = Array.from(selectedIds);
-    if (!ids.length) return;
+    const targets = transactions.filter((t) => selectedIds.has(t.id));
+    if (!targets.length) return;
+
+    const serverIds = targets
+      .filter((t) => !t.id.startsWith("optimistic-") && !t.isPending)
+      .map((t) => t.id);
+
     setDeleting(true);
-    const result = await bulkDeleteTransactionsAction(ids);
-    setDeleting(false);
     setBulkDeleteOpen(false);
+    onBulkDeleted?.(targets);
+
+    if (!serverIds.length) {
+      setDeleting(false);
+      clearSelection();
+      toast.success("Transactions removed.");
+      return;
+    }
+
+    const result = await bulkDeleteTransactionsAction(serverIds);
+    setDeleting(false);
+
     if (result?.success) {
       toast.success(result.message);
-      onBulkDeleted?.(ids);
       clearSelection();
     } else {
+      for (const target of targets.filter((t) => serverIds.includes(t.id))) {
+        onTransactionRestored?.(target);
+      }
       toast.error(result?.message ?? "Bulk delete failed.");
     }
   };
@@ -370,9 +409,8 @@ export function TransactionTable({
                     </button>
                     <button
                       type="button"
-                      onClick={() => !t.isPending && setDeleteId(t.id)}
-                      disabled={t.isPending}
-                      className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:bg-[var(--color-error-bg)] hover:text-[var(--color-error)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      onClick={() => setDeleteTarget(t)}
+                      className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:bg-[var(--color-error-bg)] hover:text-[var(--color-error)] transition-colors"
                       aria-label="Delete transaction"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -471,7 +509,7 @@ export function TransactionTable({
               </button>
               <button
                 type="button"
-                onClick={() => setDeleteId(t.id)}
+                onClick={() => setDeleteTarget(t)}
                 className="mt-0.5 w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-faint)] hover:bg-[var(--color-error-bg)] hover:text-[var(--color-error)] flex-shrink-0"
                 aria-label="Delete transaction"
               >
@@ -542,11 +580,15 @@ export function TransactionTable({
       )}
 
       <ConfirmDialog
-        open={!!deleteId}
-        onClose={() => setDeleteId(null)}
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Delete Transaction"
-        description="This action cannot be undone. The transaction will be permanently removed."
+        description={
+          deleteTarget?.isPending || deleteTarget?.id.startsWith("optimistic-")
+            ? "Remove this unsaved transaction?"
+            : "This action cannot be undone. The transaction will be permanently removed."
+        }
         confirmLabel={deleting ? "Deleting…" : "Delete"}
       />
 

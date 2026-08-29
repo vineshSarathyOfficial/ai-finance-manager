@@ -113,6 +113,7 @@ export async function deleteTransactionAction(id: string): Promise<ActionState> 
       return { success: false, message: "Transaction not found." };
     }
     revalidatePath("/dashboard");
+    revalidatePath("/transactions");
     return { success: true, message: "Transaction deleted." };
   } catch {
     return { success: false, message: "Failed to delete transaction. Please try again." };
@@ -135,6 +136,7 @@ export async function bulkDeleteTransactionsAction(ids: string[]): Promise<Actio
   try {
     const result = await dbBulkDelete(userId, ids);
     revalidatePath("/dashboard");
+    revalidatePath("/transactions");
     return {
       success: true,
       message: `Deleted ${result.count} transaction${result.count === 1 ? "" : "s"}.`,
