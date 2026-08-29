@@ -19,7 +19,10 @@ export const createTransactionSchema = z.object({
     message: "Please enter a valid date.",
   }),
   paymentMethod: z.string().optional(),
-  notes: z.string().max(1000).optional(),
+  notes: z.string().optional(),
+  accountId: z.string().optional(),
+  transactionKind: z.enum(["REGULAR", "TRANSFER", "REFUND", "CC_PAYMENT", "EXCLUDED"]).optional(),
+  excludeFromTotals: z.boolean().optional(),
 });
 
 export const updateTransactionSchema = createTransactionSchema.extend({
@@ -29,17 +32,46 @@ export const updateTransactionSchema = createTransactionSchema.extend({
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 
-// For query/filter
 export const transactionFiltersSchema = z.object({
   search: z.string().optional(),
   type: z.enum(["INCOME", "EXPENSE", "ALL"]).optional(),
   categoryId: z.string().optional(),
+  accountId: z.string().optional(),
+  merchant: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  transactionKind: z.enum(["REGULAR", "TRANSFER", "REFUND", "CC_PAYMENT", "EXCLUDED", "ALL"]).optional(),
+  minAmount: z.coerce.number().optional(),
+  maxAmount: z.coerce.number().optional(),
+  excludeTransfers: z.coerce.boolean().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
   page: z.coerce.number().min(1).default(1),
   pageSize: z.coerce.number().min(1).max(100).default(20),
-  sortBy: z.enum(["transactionDate", "amount", "createdAt"]).default("transactionDate"),
+  sortBy: z
+    .enum([
+      "transactionDate",
+      "amount",
+      "createdAt",
+      "description",
+      "paymentMethod",
+      "type",
+      "categoryName",
+      "transactionKind",
+    ])
+    .default("transactionDate"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
 export type TransactionFilters = z.infer<typeof transactionFiltersSchema>;
+
+export const createAccountSchema = z.object({
+  name: z.string().min(1).max(100),
+  type: z.enum(["BANK", "CREDIT_CARD", "CASH", "OTHER"]),
+  institution: z.string().optional(),
+  lastFour: z.string().max(4).optional(),
+});
+
+export const createBudgetSchema = z.object({
+  categoryId: z.string().min(1),
+  monthlyLimit: z.string().refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0),
+});

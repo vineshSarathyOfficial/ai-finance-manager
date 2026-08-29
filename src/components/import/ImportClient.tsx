@@ -17,6 +17,7 @@ export function ImportClient({ categories, pastImports }: ImportClientProps) {
     fileName: string;
     transactions: AnalyzedTransaction[];
     duplicateCount: number;
+    detectedFormat?: string;
   } | null>(null);
 
   return (
@@ -32,6 +33,7 @@ export function ImportClient({ categories, pastImports }: ImportClientProps) {
           initialTransactions={parsedData.transactions}
           categories={categories}
           duplicateCount={parsedData.duplicateCount}
+          statementSource={parsedData.detectedFormat}
           onReset={() => setParsedData(null)}
         />
       )}

@@ -51,7 +51,7 @@ export function RecurringWidget({ summary, topItems }: Props) {
   if (summary.activeCount === 0) return null;
 
   return (
-    <div className="bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[var(--radius-xl)] overflow-hidden">
+    <div className="bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[var(--radius-lg)] overflow-hidden shadow-level-1">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-hairline)]">
         <div className="flex items-center gap-2">
@@ -69,19 +69,19 @@ export function RecurringWidget({ summary, topItems }: Props) {
       {/* Monthly cost + due alert */}
       <div className="px-5 py-4 flex flex-wrap items-center gap-4 border-b border-[var(--color-hairline)] bg-[var(--color-canvas-soft)]">
         <div className="flex items-center gap-2">
-          <TrendingDown className="w-4 h-4 text-rose-400" />
+          <TrendingDown className="w-4 h-4 text-[var(--color-ruby)]" />
           <div>
             <p className="caption text-[var(--color-ink-faint)]">Monthly recurring cost</p>
-            <p className="font-bold text-[var(--color-ink)] text-[18px]">
+            <p className="heading-md body-tabular text-[var(--color-ink)]">
               {formatCurrency(summary.totalMonthlyExpense)}
             </p>
           </div>
         </div>
 
         {summary.dueThisWeek.length > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-full)] bg-amber-500/10 border border-amber-500/20 ml-auto">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-            <span className="caption text-amber-400 font-medium">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-full)] bg-[var(--color-warning-bg)] border border-[var(--color-hairline)] ml-auto">
+            <AlertTriangle className="w-3.5 h-3.5 text-[var(--color-warning)]" />
+            <span className="caption text-[var(--color-warning)]">
               {summary.dueThisWeek.length} due this week
             </span>
           </div>
@@ -107,12 +107,12 @@ export function RecurringWidget({ summary, topItems }: Props) {
                     Next: {formatDate(item.nextDueDate)}
                   </span>
                   {dueSoon && (
-                    <span className="caption text-amber-400 font-medium">· Soon</span>
+                    <span className="caption text-[var(--color-warning)]">· Soon</span>
                   )}
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="body-sm font-semibold text-[var(--color-ink)]">
+                <p className="body-sm body-tabular text-[var(--color-ink)]">
                   {formatCurrency(Number(item.amount))}
                 </p>
                 <p className="caption text-[var(--color-ink-faint)]">

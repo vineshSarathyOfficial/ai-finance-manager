@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { getRequiredSession } from "@/lib/auth/session";
 import { logoutUser } from "@/actions/auth";
-import { User, Lock, LogOut, Database } from "lucide-react";
+import { User, Lock, LogOut, Database, Wallet } from "lucide-react";
+import Link from "next/link";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { SettingsExportButton } from "@/components/settings/SettingsExportButton";
 import { SettingsDangerZone } from "@/components/settings/SettingsDangerZone";
 import { SettingsAiCard } from "@/components/settings/SettingsAiCard";
@@ -27,12 +29,18 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="heading-2 text-[var(--color-ink)]">Settings</h1>
-        <p className="body-sm text-[var(--color-ink-muted)] mt-1">
-          Manage your account, preferences, and integrations
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Manage your account, preferences, and integrations"
+      />
+
+      <Link href="/accounts" className="flex items-center gap-3 p-4 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-surface-card)] hover:shadow-card transition-shadow">
+        <Wallet className="w-5 h-5 text-[var(--color-primary)]" />
+        <div>
+          <p className="title-md text-[var(--color-ink)]">Manage Accounts</p>
+          <p className="body-sm text-[var(--color-ink-muted)]">Bank accounts, credit cards, and cash</p>
+        </div>
+      </Link>
 
       {/* Profile card */}
       <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] shadow-level-1">

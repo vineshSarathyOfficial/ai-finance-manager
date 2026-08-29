@@ -4,67 +4,84 @@ import {
   getDashboardSummary,
   getMonthlyTrend,
   getCategorySpend,
-  getInsight,
+  getCreditCardSummary,
 } from "@/lib/db/dashboard";
+import { getMonthOverMonthChange } from "@/lib/finance/metrics";
+import { generateInsights } from "@/lib/finance/insights";
 import { getRecentTransactions } from "@/lib/db/transactions";
 import { getRecurringSummary, getRecurringTransactions } from "@/actions/recurring";
-import { SummaryCards } from "@/components/dashboard/SummaryCards";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { CashFlowHero } from "@/components/dashboard/CashFlowHero";
+import { InsightsList } from "@/components/dashboard/InsightsList";
 import { MonthlyTrendChart } from "@/components/dashboard/MonthlyTrendChart";
 import { CategoryDonutChart } from "@/components/dashboard/CategoryDonutChart";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
-import { InsightBanner } from "@/components/dashboard/InsightBanner";
 import { RecurringWidget } from "@/components/dashboard/RecurringWidget";
-import { DashboardAiCard } from "@/components/dashboard/DashboardAiCard";
+import { CreditCardSummaryWidget } from "@/components/dashboard/CreditCardSummaryWidget";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { UploadCloud } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-};
+export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const userId = await getRequiredUserId();
 
-  const [summary, trend, categorySpend, insight, recentTransactions, recurringSummary, recurringItems] =
+  const [summary, mom, trend, categorySpend, insights, recentTransactions, recurringSummary, recurringItems, ccSummary] =
     await Promise.all([
       getDashboardSummary(userId),
+      getMonthOverMonthChange(userId),
       getMonthlyTrend(userId, 6),
       getCategorySpend(userId),
-      getInsight(userId),
+      generateInsights(userId, 3),
       getRecentTransactions(userId, 8),
       getRecurringSummary(userId),
       getRecurringTransactions(userId),
+      getCreditCardSummary(userId),
     ]);
+
+  const monthLabel = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric" }).format(new Date());
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="heading-2 text-[var(--color-ink)]">Dashboard</h1>
-        <p className="body-sm text-[var(--color-ink-muted)] mt-1">
-          {new Intl.DateTimeFormat("en-IN", {
-            month: "long",
-            year: "numeric",
-          }).format(new Date())}
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        description={monthLabel}
+        action={
+          <Link href="/import" className="hidden sm:block">
+            <Button variant="secondary" size="sm">
+              <UploadCloud className="w-4 h-4" />
+              Import
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Summary Cards */}
-      <SummaryCards summary={summary} />
+      <CashFlowHero summary={summary} expenseChange={mom.expenseChange} />
 
-      {/* AI Financial Health Briefing Card */}
-      <DashboardAiCard />
+      {insights.length > 0 && <InsightsList insights={insights} compact />}
 
-      {insight && <InsightBanner message={insight} />}
-
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
-        <div className="xl:col-span-3">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
+        <div className="xl:col-span-3 min-w-0">
           <MonthlyTrendChart data={trend} />
         </div>
-        <div className="xl:col-span-2">
+        <div className="xl:col-span-2 min-w-0">
           <CategoryDonutChart data={categorySpend} />
         </div>
       </div>
 
-      <RecentTransactions transactions={recentTransactions} />
-
+      {ccSummary ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-2 min-w-0">
+            <RecentTransactions transactions={recentTransactions} />
+          </div>
+          <div className="min-w-0">
+            <CreditCardSummaryWidget summary={ccSummary} />
+          </div>
+        </div>
+      ) : (
+        <RecentTransactions transactions={recentTransactions} />
+      )}
       <RecurringWidget summary={recurringSummary} topItems={recurringItems.slice(0, 5)} />
     </div>
   );

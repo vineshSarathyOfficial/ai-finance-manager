@@ -76,7 +76,7 @@ export function GmailSyncCard({ initialStatus, variant = "full" }: Props) {
             <div className="flex items-center gap-2">
               <h2 className="title text-[var(--color-ink)]">Gmail Transaction Sync</h2>
               {status.connected && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[var(--radius-full)] text-xs bg-[var(--color-success-bg)] text-[var(--color-accent-green)] border border-[var(--color-hairline)]">
                   <CheckCircle2 className="w-3 h-3" /> Connected
                 </span>
               )}
@@ -108,7 +108,7 @@ export function GmailSyncCard({ initialStatus, variant = "full" }: Props) {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2 caption text-[var(--color-ink-muted)]">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-[var(--color-income)] flex-shrink-0" />
               <span>Read-only access to financial notification emails only</span>
             </div>
 

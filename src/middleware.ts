@@ -12,8 +12,14 @@ export default auth(async (req: NextRequest & { auth: { user?: { id?: string } }
   const isAuth = !!session?.user?.id;
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");
   const isPublicApi = pathname.startsWith("/api/auth");
+  const isProtectedApi = pathname.startsWith("/api/") && !isPublicApi;
 
   if (isPublicApi) return NextResponse.next();
+
+  // API routes must return JSON — never redirect to the login page (breaks fetch().json()).
+  if (!isAuth && isProtectedApi) {
+    return NextResponse.json({ success: false, message: "Unauthorized. Please log in again." }, { status: 401 });
+  }
 
   if (!isAuth && !isAuthPage) {
     const loginUrl = new URL("/login", req.url);

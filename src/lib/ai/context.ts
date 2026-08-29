@@ -31,7 +31,7 @@ export async function buildFinancialContext(userId: string): Promise<string> {
   const contextObj = {
     currency: "INR (₹)",
     currentMonthSummary: {
-      totalBalance: summary.totalBalance,
+      netCashFlow: summary.netCashFlow,
       incomeThisMonth: summary.incomeThisMonth,
       expensesThisMonth: summary.expensesThisMonth,
       savingsThisMonth: summary.savingsThisMonth,

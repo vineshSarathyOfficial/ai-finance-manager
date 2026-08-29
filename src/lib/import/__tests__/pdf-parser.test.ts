@@ -1,9 +1,14 @@
 import PDFDocument from "pdfkit";
 import { parseBankStatementPdfBuffer } from "../pdf-parser";
 
-async function createMockPdfStatement(): Promise<Buffer> {
+async function createMockPdfStatement(options?: { password?: string }): Promise<Buffer> {
   return new Promise((resolve) => {
-    const doc = new PDFDocument({ margin: 40 });
+    const doc = new PDFDocument({
+      margin: 40,
+      ...(options?.password
+        ? { userPassword: options.password, ownerPassword: options.password }
+        : {}),
+    });
     const chunks: Buffer[] = [];
 
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -49,7 +54,34 @@ async function runPdfTests() {
   console.log("🎉 PDF Statement Parser Test Passed Successfully!");
 }
 
-runPdfTests().catch((e) => {
-  console.error("PDF Test Failed:", e);
-  process.exit(1);
-});
+async function runPasswordPdfTests() {
+  console.log("\n🧪 Testing Password-Protected PDF Parsing...");
+
+  const protectedPdf = await createMockPdfStatement({ password: "test1234" });
+
+  const noPasswordResult = await parseBankStatementPdfBuffer(protectedPdf);
+  if (noPasswordResult.success || noPasswordResult.errorCode !== "PASSWORD_REQUIRED") {
+    throw new Error(`Expected PASSWORD_REQUIRED, got ${noPasswordResult.errorCode}`);
+  }
+
+  const wrongPasswordResult = await parseBankStatementPdfBuffer(protectedPdf, "wrong");
+  if (wrongPasswordResult.success || wrongPasswordResult.errorCode !== "PASSWORD_INCORRECT") {
+    throw new Error(`Expected PASSWORD_INCORRECT, got ${wrongPasswordResult.errorCode}`);
+  }
+
+  const correctPasswordResult = await parseBankStatementPdfBuffer(protectedPdf, "test1234");
+  if (!correctPasswordResult.success || correctPasswordResult.transactions.length !== 5) {
+    throw new Error(
+      `Expected 5 transactions with correct password, got ${correctPasswordResult.transactions.length}`
+    );
+  }
+
+  console.log("🎉 Password-Protected PDF Parser Test Passed Successfully!");
+}
+
+runPdfTests()
+  .then(() => runPasswordPdfTests())
+  .catch((e) => {
+    console.error("PDF Test Failed:", e);
+    process.exit(1);
+  });

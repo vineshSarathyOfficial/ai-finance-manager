@@ -96,7 +96,7 @@ export function TransactionFormModal({
                     type === t
                       ? t === "EXPENSE"
                         ? "bg-red-50 text-[var(--color-error)]"
-                        : "bg-green-50 text-[var(--color-accent-green)]"
+                        : "bg-[var(--color-income-bg)] text-[var(--color-income)]"
                       : "bg-[var(--color-surface)] text-[var(--color-ink-muted)] hover:bg-[var(--color-canvas-soft)]"
                   }`}
                 >

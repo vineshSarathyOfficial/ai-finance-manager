@@ -1,49 +1,108 @@
 import type { ParsedRawTransaction, ParseResult } from "./csv-parser";
+import {
+  detectPdfStatementKind,
+  inferCreditCardTransactionType,
+  isSkippableStatementRow,
+  resolvePaymentMethod,
+  type StatementKind,
+} from "./statement-utils";
+import { isHdfcCreditCardPdf, parseHdfcCreditCardPdfText } from "./hdfc-cc-pdf-parser";
 
-/**
- * Extracts text from a PDF Buffer using pdf-parse and extracts bank transactions.
- */
-export async function parseBankStatementPdfBuffer(buffer: Buffer): Promise<ParseResult> {
+export type PdfParseErrorCode = "PASSWORD_REQUIRED" | "PASSWORD_INCORRECT";
+
+interface PdfTextExtractionResult {
+  success: boolean;
+  text?: string;
+  error?: string;
+  errorCode?: PdfParseErrorCode;
+}
+
+function classifyPdfPasswordError(error: unknown): PdfParseErrorCode | null {
+  const message = String((error as Error | undefined)?.message ?? "").toLowerCase();
+  if (!message.includes("password")) return null;
+  if (message.includes("incorrect") || message.includes("invalid")) {
+    return "PASSWORD_INCORRECT";
+  }
+  return "PASSWORD_REQUIRED";
+}
+
+async function extractPdfText(buffer: Buffer, password?: string): Promise<PdfTextExtractionResult> {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pdfModule = require("pdf-parse");
+  let parser: { getText: () => Promise<unknown>; destroy?: () => Promise<void> } | null = null;
+
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfModule = require("pdf-parse");
     let extractedText = "";
 
-    // pdf-parse v2+ (Class based API)
     if (pdfModule.PDFParse) {
-      const parser = new pdfModule.PDFParse({ data: buffer });
-      const textResult = await parser.getText();
-      extractedText = typeof textResult === "string" ? textResult : textResult.text || "";
-      await parser.destroy();
-    }
-    // pdf-parse v1 (Function based API)
-    else if (typeof pdfModule === "function") {
-      const data = await pdfModule(buffer);
+      parser = new pdfModule.PDFParse({ data: buffer, password });
+      const textResult = await parser!.getText();
+      extractedText = typeof textResult === "string" ? textResult : (textResult as { text?: string }).text || "";
+    } else if (typeof pdfModule === "function") {
+      const data = await pdfModule(buffer, password ? { password } : undefined);
       extractedText = data.text || "";
     } else if (typeof pdfModule.default === "function") {
-      const data = await pdfModule.default(buffer);
+      const data = await pdfModule.default(buffer, password ? { password } : undefined);
       extractedText = data.text || "";
     }
 
     if (!extractedText.trim()) {
       return {
         success: false,
-        transactions: [],
-        totalRowsParsed: 0,
         error: "No text could be extracted from this PDF. It may be an image-only scanned document.",
       };
     }
 
-    return parseBankStatementPdfText(extractedText);
+    return { success: true, text: extractedText };
   } catch (error) {
+    const passwordError = classifyPdfPasswordError(error);
+    if (passwordError === "PASSWORD_INCORRECT") {
+      return {
+        success: false,
+        errorCode: "PASSWORD_INCORRECT",
+        error: "Incorrect PDF password. Please try again.",
+      };
+    }
+    if (passwordError === "PASSWORD_REQUIRED") {
+      return {
+        success: false,
+        errorCode: "PASSWORD_REQUIRED",
+        error: "This PDF is password-protected. Enter the password to continue.",
+      };
+    }
+
     console.error("PDF Parsing library error:", error);
+    return {
+      success: false,
+      error: "Failed to read binary PDF content. The file might be corrupted.",
+    };
+  } finally {
+    if (parser?.destroy) {
+      await parser.destroy();
+    }
+  }
+}
+
+/**
+ * Extracts text from a PDF Buffer using pdf-parse and extracts bank transactions.
+ */
+export async function parseBankStatementPdfBuffer(
+  buffer: Buffer,
+  password?: string
+): Promise<ParseResult> {
+  const extraction = await extractPdfText(buffer, password);
+
+  if (!extraction.success || !extraction.text) {
     return {
       success: false,
       transactions: [],
       totalRowsParsed: 0,
-      error: "Failed to read binary PDF content. The file might be password-protected or corrupted.",
+      error: extraction.error,
+      errorCode: extraction.errorCode,
     };
   }
+
+  return parseBankStatementPdfText(extraction.text);
 }
 
 /**
@@ -58,14 +117,27 @@ export function parseBankStatementPdfText(text: string): ParseResult {
     return { success: false, transactions: [], totalRowsParsed: 0, error: "The PDF document contains no readable text." };
   }
 
+  const statementKind = detectPdfStatementKind(text);
+
+  // HDFC credit card statements use a distinct layout — dedicated parser first
+  if (isHdfcCreditCardPdf(text)) {
+    const hdfcTransactions = parseHdfcCreditCardPdfText(text);
+    if (hdfcTransactions.length > 0) {
+      return {
+        success: true,
+        transactions: hdfcTransactions,
+        totalRowsParsed: hdfcTransactions.length,
+        detectedFormat: "HDFC Credit Card PDF",
+      };
+    }
+  }
+
   const transactions: ParsedRawTransaction[] = [];
   let totalRowsParsed = 0;
 
-  // Multi-format date regex:
-  // - 01/08/2024, 01-08-2024, 01/08/24
-  // - 01 Aug 2024, 01-Aug-2024, 01 Aug 24
-  // - 2024-08-01, 2024/08/01
-  const datePattern = /(?:^|\s)(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}[-\s]+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-\s]+\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2})(?:\s|$)/i;
+  // Multi-format date regex (incl. HDFC CC: 22/12/2025| 00:00)
+  const datePattern =
+    /(?:^|\s)(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}(?:\s*\|\s*\d{1,2}:\d{2})?|\d{1,2}[-\s]+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-\s]+\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2})(?:\s|$)/i;
 
   // Monetary amount pattern: e.g. 1,450.00 or 500.50 (with optional Cr/Dr or +/-)
   const amountRegex = /(?:^|\s)(?:Rs\.?|INR|₹)?\s*([+-]?\d{1,3}(?:,\d{2,3})*(?:\.\d{1,2})|\d+(?:\.\d{1,2}))\s*(CR|DR|Cr|Dr)?(?:\s|$)/g;
@@ -91,7 +163,7 @@ export function parseBankStatementPdfText(text: string): ParseResult {
         const nextAmounts = Array.from(nextLine.matchAll(amountRegex));
         if (nextAmounts.length > 0) {
           const combinedLine = `${line} ${nextLine}`;
-          const parsed = extractTransactionFromLine(combinedLine, rawDateStr, parsedDate, nextAmounts);
+          const parsed = extractTransactionFromLine(combinedLine, rawDateStr, parsedDate, nextAmounts, statementKind);
           if (parsed) {
             transactions.push(parsed);
             i++; // skip next line
@@ -102,7 +174,7 @@ export function parseBankStatementPdfText(text: string): ParseResult {
       continue;
     }
 
-    const parsed = extractTransactionFromLine(line, rawDateStr, parsedDate, amountMatches);
+    const parsed = extractTransactionFromLine(line, rawDateStr, parsedDate, amountMatches, statementKind);
     if (parsed) {
       transactions.push(parsed);
     }
@@ -112,7 +184,14 @@ export function parseBankStatementPdfText(text: string): ParseResult {
     success: transactions.length > 0,
     transactions,
     totalRowsParsed,
-    detectedFormat: "PDF Bank Statement",
+    detectedFormat:
+      statementKind === "CREDIT_CARD" ? "PDF Credit Card Statement" : "PDF Bank Statement",
+    error:
+      transactions.length === 0
+        ? isHdfcCreditCardPdf(text)
+          ? "Could not extract transactions from this HDFC credit card PDF. Try downloading the CSV from HDFC NetBanking instead."
+          : "No valid transactions found in this PDF."
+        : undefined,
   };
 }
 
@@ -120,7 +199,8 @@ function extractTransactionFromLine(
   line: string,
   rawDateStr: string,
   parsedDate: Date,
-  amounts: RegExpMatchArray[]
+  amounts: RegExpMatchArray[],
+  statementKind: StatementKind
 ): ParsedRawTransaction | null {
   let amount = 0;
   let type: "INCOME" | "EXPENSE" = "EXPENSE";
@@ -145,7 +225,12 @@ function extractTransactionFromLine(
     upperLine.includes("DEPOSIT") ||
     upperLine.includes("SALARY") ||
     upperLine.includes("REFUND") ||
-    upperLine.includes("INWARD");
+    upperLine.includes("INWARD") ||
+    upperLine.includes("PAYMENT RECEIVED") ||
+    upperLine.includes("AUTOPAY") ||
+    upperLine.includes("AUTO PAY") ||
+    upperLine.includes("CASHBACK") ||
+    upperLine.includes("REVERSAL");
 
   if (numValues.length === 1) {
     amount = numValues[0].val;
@@ -185,8 +270,16 @@ function extractTransactionFromLine(
     .replace(/\s+/g, " ")
     .trim();
 
+  if (isSkippableStatementRow(desc, rawDateStr)) {
+    return null;
+  }
+
   if (!desc || desc.length < 2) {
-    desc = type === "INCOME" ? "Inward Credit" : "Bank Debit";
+    desc = type === "INCOME" ? "Inward Credit" : statementKind === "CREDIT_CARD" ? "Card Transaction" : "Bank Debit";
+  }
+
+  if (statementKind === "CREDIT_CARD" && type === "EXPENSE" && inferCreditCardTransactionType(desc) === "INCOME") {
+    type = "INCOME";
   }
 
   return {
@@ -195,13 +288,13 @@ function extractTransactionFromLine(
     description: desc,
     amount,
     type,
-    paymentMethod: detectPaymentMethod(desc),
+    paymentMethod: resolvePaymentMethod(desc, statementKind),
   };
 }
 
 function parsePdfDate(str: string): Date | null {
   if (!str) return null;
-  const clean = str.trim().replace(/['"]/g, "");
+  const clean = str.trim().replace(/['"]/g, "").split("|")[0].trim();
 
   // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
   const ddmmyyyy = /^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/.exec(clean);
@@ -225,12 +318,3 @@ function parsePdfDate(str: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-function detectPaymentMethod(desc: string): string {
-  const upper = desc.toUpperCase();
-  if (upper.includes("UPI") || upper.includes("/UPI/")) return "UPI";
-  if (upper.includes("POS ") || upper.includes("ECOM")) return "Debit Card";
-  if (upper.includes("ATM ") || upper.includes("CASH WDL")) return "Cash";
-  if (upper.includes("NEFT") || upper.includes("RTGS") || upper.includes("IMPS")) return "Net Banking";
-  if (upper.includes("CHQ") || upper.includes("CHEQUE")) return "Cheque";
-  return "Other";
-}

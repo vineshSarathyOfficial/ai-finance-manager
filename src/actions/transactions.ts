@@ -6,6 +6,7 @@ import {
   createTransaction as dbCreate,
   updateTransaction as dbUpdate,
   deleteTransaction as dbDelete,
+  bulkDeleteTransactions as dbBulkDelete,
 } from "@/lib/db/transactions";
 import {
   createTransactionSchema,
@@ -97,5 +98,26 @@ export async function deleteTransactionAction(id: string): Promise<ActionState> 
     return { success: true, message: "Transaction deleted." };
   } catch {
     return { success: false, message: "Failed to delete transaction. Please try again." };
+  }
+}
+
+export async function bulkDeleteTransactionsAction(ids: string[]): Promise<ActionState> {
+  const userId = await getRequiredUserId();
+
+  if (!ids.length) {
+    return { success: false, message: "No transactions selected." };
+  }
+
+  try {
+    const result = await dbBulkDelete(userId, ids);
+    revalidatePath("/dashboard");
+    revalidatePath("/transactions");
+    revalidatePath("/analytics");
+    return {
+      success: true,
+      message: `Deleted ${result.count} transaction${result.count === 1 ? "" : "s"}.`,
+    };
+  } catch {
+    return { success: false, message: "Failed to delete transactions. Please try again." };
   }
 }

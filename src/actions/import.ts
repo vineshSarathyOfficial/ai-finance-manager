@@ -3,17 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { getRequiredUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
-import { getCategories } from "@/lib/db/categories";
-import { parseBankStatementCsv } from "@/lib/import/csv-parser";
-import { parseBankStatementPdfBuffer } from "@/lib/import/pdf-parser";
-import { categorizeTransaction } from "@/lib/categorization/engine";
-import { detectDuplicates } from "@/lib/import/duplicate-detector";
+import { getOrCreateDefaultAccount, findOrCreateCreditCardAccount } from "@/lib/db/accounts";
+import { analyzeStatementFile } from "@/lib/import/parse-statement";
 import type { CategorizationResult } from "@/lib/categorization/engine";
 import type { DuplicateCheckResult } from "@/lib/import/duplicate-detector";
 
 export interface AnalyzedTransaction {
-  id: string; // temporary client key
-  date: string; // ISO string
+  id: string;
+  date: string;
   description: string;
   amount: number;
   type: "INCOME" | "EXPENSE";
@@ -22,6 +19,9 @@ export interface AnalyzedTransaction {
   selected: boolean;
   categorization: CategorizationResult;
   duplicateInfo: DuplicateCheckResult;
+  transactionKind?: string;
+  merchantName?: string;
+  excludeFromTotals?: boolean;
 }
 
 export interface ParseStatementResponse {
@@ -30,6 +30,8 @@ export interface ParseStatementResponse {
   fileName?: string;
   totalParsed?: number;
   duplicateCount?: number;
+  detectedFormat?: string;
+  errorCode?: "PASSWORD_REQUIRED" | "PASSWORD_INCORRECT";
   transactions?: AnalyzedTransaction[];
 }
 
@@ -37,73 +39,18 @@ export async function parseStatementAction(
   formData: FormData
 ): Promise<ParseStatementResponse> {
   const userId = await getRequiredUserId();
-  const file = formData.get("file") as File | null;
+  const file = formData.get("file");
+  const pdfPasswordRaw = formData.get("pdfPassword");
+  const pdfPassword =
+    typeof pdfPasswordRaw === "string" && pdfPasswordRaw.trim().length > 0
+      ? pdfPasswordRaw.trim()
+      : undefined;
 
-  if (!file) {
+  if (!file || !(file instanceof File)) {
     return { success: false, message: "Please select a CSV or PDF file to upload." };
   }
 
-  const fileName = file.name;
-  const isCsv = fileName.toLowerCase().endsWith(".csv");
-  const isPdf = fileName.toLowerCase().endsWith(".pdf");
-
-  if (!isCsv && !isPdf) {
-    return { success: false, message: "Unsupported file format. Please upload a .csv or .pdf statement." };
-  }
-
-  try {
-    let parseResult;
-    if (isCsv) {
-      const textContent = await file.text();
-      parseResult = parseBankStatementCsv(textContent);
-    } else {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      parseResult = await parseBankStatementPdfBuffer(buffer);
-    }
-
-    if (!parseResult.success || parseResult.transactions.length === 0) {
-      return {
-        success: false,
-        message: parseResult.error ?? "No valid transactions could be found in this file.",
-      };
-    }
-
-    const categories = await getCategories(userId);
-    const duplicates = await detectDuplicates(userId, parseResult.transactions);
-
-    let duplicateCount = 0;
-    const analyzed: AnalyzedTransaction[] = parseResult.transactions.map((tx, idx) => {
-      const categorization = categorizeTransaction(tx.description, tx.type, categories);
-      const dup = duplicates[idx] ?? { isDuplicate: false, duplicateConfidence: 0 };
-      if (dup.isDuplicate) duplicateCount++;
-
-      return {
-        id: `row-${idx}-${Date.now()}`,
-        date: tx.date.toISOString(),
-        description: tx.description,
-        amount: tx.amount,
-        type: tx.type,
-        paymentMethod: tx.paymentMethod,
-        referenceNo: tx.referenceNo,
-        selected: !dup.isDuplicate, // auto-deselect duplicates by default
-        categorization,
-        duplicateInfo: dup,
-      };
-    });
-
-    return {
-      success: true,
-      message: `Parsed ${analyzed.length} transactions from ${fileName}.`,
-      fileName,
-      totalParsed: analyzed.length,
-      duplicateCount,
-      transactions: analyzed,
-    };
-  } catch (error) {
-    console.error("Statement parse error:", error);
-    return { success: false, message: "Failed to read or parse the statement file." };
-  }
+  return analyzeStatementFile(userId, file, { pdfPassword });
 }
 
 export interface CommitTransactionPayload {
@@ -114,11 +61,17 @@ export interface CommitTransactionPayload {
   categoryId: string;
   paymentMethod?: string;
   notes?: string;
+  accountId?: string;
+  merchantName?: string;
+  transactionKind?: string;
+  excludeFromTotals?: boolean;
 }
 
 export interface CommitImportPayload {
   fileName: string;
   source?: string;
+  accountId?: string;
+  isCreditCard?: boolean;
   transactions: CommitTransactionPayload[];
   totalDuplicatesDetected?: number;
 }
@@ -131,8 +84,15 @@ export async function commitImportAction(payload: CommitImportPayload) {
   }
 
   try {
+    let accountId = payload.accountId;
+    if (!accountId) {
+      const account = payload.isCreditCard
+        ? await findOrCreateCreditCardAccount(userId)
+        : await getOrCreateDefaultAccount(userId);
+      accountId = account.id;
+    }
+
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create StatementImport history record
       const statementImport = await tx.statementImport.create({
         data: {
           userId,
@@ -144,7 +104,6 @@ export async function commitImportAction(payload: CommitImportPayload) {
         },
       });
 
-      // 2. Insert all transactions linked to importId
       await tx.transaction.createMany({
         data: payload.transactions.map((t) => ({
           userId,
@@ -156,6 +115,10 @@ export async function commitImportAction(payload: CommitImportPayload) {
           paymentMethod: t.paymentMethod || null,
           notes: t.notes ? `${t.notes} (Imported)` : "Imported from statement",
           importId: statementImport.id,
+          accountId,
+          merchantName: t.merchantName || null,
+          transactionKind: (t.transactionKind as "REGULAR" | "TRANSFER" | "REFUND" | "CC_PAYMENT" | "EXCLUDED") || "REGULAR",
+          excludeFromTotals: t.excludeFromTotals ?? false,
         })),
       });
 

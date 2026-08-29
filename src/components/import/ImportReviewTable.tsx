@@ -7,6 +7,7 @@ import {
   Check,
   AlertTriangle,
   Sparkles,
+  History,
   ArrowRight,
   RotateCcw,
   CheckSquare,
@@ -23,6 +24,7 @@ interface ImportReviewTableProps {
   initialTransactions: AnalyzedTransaction[];
   categories: Category[];
   duplicateCount: number;
+  statementSource?: string;
   onReset: () => void;
 }
 
@@ -31,6 +33,7 @@ export function ImportReviewTable({
   initialTransactions,
   categories,
   duplicateCount,
+  statementSource,
   onReset,
 }: ImportReviewTableProps) {
   const router = useRouter();
@@ -101,7 +104,10 @@ export function ImportReviewTable({
     try {
       const response = await commitImportAction({
         fileName,
-        source: "Bank Statement",
+        source: statementSource?.toLowerCase().includes("credit card")
+          ? "Credit Card Statement"
+          : "Bank Statement",
+        isCreditCard: statementSource?.toLowerCase().includes("credit card"),
         totalDuplicatesDetected: duplicateCount,
         transactions: selectedList.map((t) => ({
           date: t.date,
@@ -110,6 +116,9 @@ export function ImportReviewTable({
           type: t.type,
           categoryId: t.categorization.categoryId,
           paymentMethod: t.paymentMethod,
+          merchantName: t.merchantName,
+          transactionKind: t.transactionKind,
+          excludeFromTotals: t.excludeFromTotals,
         })),
       });
 
@@ -295,14 +304,24 @@ export function ImportReviewTable({
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-full)] text-[12px] font-medium ${
                           tx.categorization.matchType === "RULE"
                             ? "bg-green-50 text-green-700 border border-green-200"
+                            : tx.categorization.matchType === "HISTORY"
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
                             : tx.categorization.matchType === "AI_FALLBACK"
                             ? "bg-purple-50 text-purple-700 border border-purple-200"
                             : "bg-gray-100 text-gray-700 border border-gray-200"
                         }`}
                       >
                         {tx.categorization.matchType === "RULE" && <Check className="w-3 h-3 text-green-600" />}
+                        {tx.categorization.matchType === "HISTORY" && <History className="w-3 h-3 text-blue-600" />}
                         {tx.categorization.matchType === "AI_FALLBACK" && <Sparkles className="w-3 h-3 text-purple-600" />}
-                        {confidencePct}% {tx.categorization.matchType === "RULE" ? "Rule match" : "AI match"}
+                        {confidencePct}%{" "}
+                        {tx.categorization.matchType === "RULE"
+                          ? "Rule match"
+                          : tx.categorization.matchType === "HISTORY"
+                          ? "Past match"
+                          : tx.categorization.matchType === "AI_FALLBACK"
+                          ? "AI match"
+                          : "Default"}
                       </span>
                     </td>
 
@@ -310,7 +329,7 @@ export function ImportReviewTable({
                     <td className="px-4 py-3.5 text-right whitespace-nowrap">
                       <span
                         className={`body-sm font-semibold ${
-                          tx.type === "INCOME" ? "text-[var(--color-accent-green)]" : "text-[var(--color-error)]"
+                          tx.type === "INCOME" ? "text-[var(--color-income)]" : "text-[var(--color-error)]"
                         }`}
                       >
                         {tx.type === "INCOME" ? "+" : "-"}{formatCurrency(tx.amount)}
@@ -334,7 +353,7 @@ export function ImportReviewTable({
           {selectedIncome > 0 && (
             <div className="hidden sm:block border-l border-[var(--color-hairline)] pl-4">
               <p className="caption text-[var(--color-ink-muted)]">Total Income</p>
-              <p className="body-sm font-semibold text-[var(--color-accent-green)]">+{formatCurrency(selectedIncome)}</p>
+              <p className="body-sm body-tabular text-[var(--color-income)]">+{formatCurrency(selectedIncome)}</p>
             </div>
           )}
           {selectedExpenses > 0 && (

@@ -6,6 +6,7 @@ interface LogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
   brandName?: string;
+  variant?: "light" | "dark";
 }
 
 export function Logo({
@@ -13,6 +14,7 @@ export function Logo({
   size = "md",
   showText = true,
   brandName = "FinPulse",
+  variant = "light",
 }: LogoProps) {
   const iconSizes = {
     sm: "w-6 h-6",
@@ -21,24 +23,20 @@ export function Logo({
   };
 
   const textSizes = {
-    sm: "text-[14px]",
+    sm: "text-[15px]",
     md: "text-[16px]",
-    lg: "text-[21px]",
+    lg: "text-[20px]",
   };
 
   return (
-    <div className={cn("flex items-center gap-2.5 select-none", className)}>
-      {/* FinPulse Gradient Emblem with Financial Waveform */}
+    <div className={cn("flex items-center gap-2 select-none", className)}>
       <div
         className={cn(
-          "relative rounded-[var(--radius-md)] flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0",
+          "relative rounded-[var(--radius-md)] flex items-center justify-center overflow-hidden flex-shrink-0 bg-[var(--color-primary)]",
           iconSizes[size]
         )}
-        style={{
-          background: "linear-gradient(135deg, #0075DE 0%, #00B4D8 55%, #10B981 100%)",
-        }}
       >
-        <svg viewBox="0 0 24 24" fill="none" className="w-[82%] h-[82%]">
+        <svg viewBox="0 0 24 24" fill="none" className="w-[78%] h-[78%]">
           <path
             d="M3 12H7L9.5 6.5L13.5 17.5L16.5 9.5L18.5 12H21"
             stroke="white"
@@ -51,19 +49,23 @@ export function Logo({
       </div>
 
       {showText && (
-        <div className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              "font-bold text-[var(--color-ink)] tracking-tight",
-              textSizes[size]
-            )}
-          >
-            Fin<span className="text-[var(--color-primary)]">Pulse</span>
-          </span>
-          <span className="inline-flex items-center px-1.5 py-0.2 rounded-[var(--radius-xs)] text-[10px] font-bold bg-gradient-to-r from-blue-600 to-emerald-500 text-white tracking-wider uppercase">
-            AI
-          </span>
-        </div>
+        <span
+          className={cn(
+            "font-semibold tracking-tight",
+            textSizes[size],
+            variant === "dark" ? "text-white" : "text-[var(--color-ink)]"
+          )}
+        >
+          {brandName.split(/(Pulse)/).map((part, i) =>
+            part === "Pulse" ? (
+              <span key={i} className="text-[var(--color-primary)]">
+                {part}
+              </span>
+            ) : (
+              part
+            )
+          )}
+        </span>
       )}
     </div>
   );

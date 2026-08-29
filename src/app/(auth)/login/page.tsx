@@ -18,7 +18,7 @@ export default function LoginPage() {
         </div>
 
         {state?.message && (
-          <div className="mb-4 p-3 rounded-[var(--radius-md)] bg-[var(--color-error-bg)] border border-red-200">
+          <div className="mb-4 p-3 rounded-[var(--radius-md)] bg-[var(--color-error-bg)] border border-[var(--color-hairline)]">
             <p className="caption text-[var(--color-error)]">{state.message}</p>
           </div>
         )}

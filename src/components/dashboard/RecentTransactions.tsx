@@ -9,7 +9,7 @@ interface RecentTransactionsProps {
 
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   return (
-    <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] shadow-level-1">
+    <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] shadow-level-1 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-hairline)]">
         <h2 className="title text-[var(--color-ink)]">Recent Transactions</h2>
         <Link
@@ -37,31 +37,31 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
       ) : (
         <div className="divide-y divide-[var(--color-hairline)]">
           {transactions.map((t) => (
-            <div key={t.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-[var(--color-canvas-soft)] transition-colors">
+            <div key={t.id} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 hover:bg-[var(--color-canvas-soft)] transition-colors">
               <div
                 className={`w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0 text-base ${
-                  t.type === "INCOME" ? "bg-green-50" : "bg-red-50"
+                  t.type === "INCOME" ? "bg-[var(--color-income-bg)]" : "bg-[var(--color-expense-bg)]"
                 }`}
               >
                 {t.category.icon || (t.type === "INCOME" ? "💰" : "💸")}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="body-sm text-[var(--color-ink)] font-medium truncate">{t.description}</p>
-                <p className="caption text-[var(--color-ink-faint)]">
+                <p className="caption text-[var(--color-ink-faint)] truncate">
                   {t.category.name} · {formatDate(t.transactionDate)}
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className="flex items-center gap-1 flex-shrink-0 ml-1">
                 {t.type === "INCOME" ? (
-                  <TrendingUp className="w-3.5 h-3.5 text-[var(--color-accent-green)]" />
+                  <TrendingUp className="w-3.5 h-3.5 text-[var(--color-income)] hidden sm:block" />
                 ) : (
-                  <TrendingDown className="w-3.5 h-3.5 text-[var(--color-error)]" />
+                  <TrendingDown className="w-3.5 h-3.5 text-[var(--color-ink-muted)] hidden sm:block" />
                 )}
                 <span
-                  className={`body-sm font-semibold ${
+                  className={`body-sm body-tabular font-normal whitespace-nowrap ${
                     t.type === "INCOME"
-                      ? "text-[var(--color-accent-green)]"
-                      : "text-[var(--color-error)]"
+                      ? "text-[var(--color-income)]"
+                      : "text-[var(--color-ink)]"
                   }`}
                 >
                   {t.type === "INCOME" ? "+" : "-"}

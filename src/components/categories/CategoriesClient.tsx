@@ -36,7 +36,7 @@ function CategorySection({
       <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-hairline)]">
         <div className="flex items-center gap-2.5">
           <span
-            className={`w-2 h-2 rounded-full ${type === "INCOME" ? "bg-[var(--color-accent-green)]" : "bg-[var(--color-error)]"}`}
+            className={`w-2 h-2 rounded-full ${type === "INCOME" ? "bg-[var(--color-income)]" : "bg-[var(--color-error)]"}`}
           />
           <h2 className="title text-[var(--color-ink)]">{title}</h2>
           <span className="eyebrow text-[var(--color-ink-faint)] px-2 py-0.5 rounded-[var(--radius-full)] bg-[var(--color-canvas-soft)] border border-[var(--color-hairline)]">
@@ -106,10 +106,10 @@ function CategorySection({
                 <span className="text-lg w-6 text-center">{cat.icon || "📦"}</span>
                 <span className="body-sm text-[var(--color-ink)]">{cat.name}</span>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => setDeleteId(cat.id)}
-                  className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:bg-red-50 hover:text-[var(--color-error)] transition-colors"
+                  className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:bg-[var(--color-error-bg)] hover:text-[var(--color-error)] transition-colors lg:opacity-0 lg:group-hover:opacity-100"
                   aria-label={`Delete ${cat.name}`}
                 >
                   <Trash2 className="w-3.5 h-3.5" />

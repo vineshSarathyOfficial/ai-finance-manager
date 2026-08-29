@@ -20,10 +20,13 @@ export type SerializedTransaction = Omit<Transaction, "amount"> & {
 };
 
 export interface DashboardSummary {
-  totalBalance: number;
   incomeThisMonth: number;
   expensesThisMonth: number;
   savingsThisMonth: number;
+  savingsRate: number;
+  netCashFlow: number;
+  totalIncome: number;
+  totalExpenses: number;
 }
 
 export interface MonthlyTrendData {

@@ -4,10 +4,13 @@ import { UploadCloud } from "lucide-react";
 import { getRequiredUserId } from "@/lib/auth/session";
 import { getTransactions } from "@/lib/db/transactions";
 import { getCategories } from "@/lib/db/categories";
+import { getAccounts } from "@/lib/db/accounts";
 import { transactionFiltersSchema } from "@/lib/validations/transaction";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 import { AddTransactionButton } from "@/components/transactions/AddTransactionButton";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/Button";
 
 export const metadata: Metadata = { title: "Transactions" };
 
@@ -23,6 +26,13 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
     search: sp.search,
     type: sp.type,
     categoryId: sp.categoryId,
+    accountId: sp.accountId,
+    merchant: sp.merchant,
+    paymentMethod: sp.paymentMethod,
+    transactionKind: sp.transactionKind,
+    minAmount: sp.minAmount,
+    maxAmount: sp.maxAmount,
+    excludeTransfers: sp.excludeTransfers,
     dateFrom: sp.dateFrom,
     dateTo: sp.dateTo,
     page: sp.page,
@@ -31,34 +41,31 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
     sortOrder: sp.sortOrder,
   });
 
-  const [{ transactions, total, pageCount }, categories] = await Promise.all([
+  const [{ transactions, total, pageCount }, categories, accounts] = await Promise.all([
     getTransactions(userId, filters),
     getCategories(userId),
+    getAccounts(userId),
   ]);
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="heading-2 text-[var(--color-ink)]">Transactions</h1>
-          <p className="caption text-[var(--color-ink-muted)] mt-0.5">
-            {total} transaction{total !== 1 ? "s" : ""} found
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <Link
-            href="/import"
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-[var(--radius-full)] border border-[var(--color-hairline)] bg-[var(--color-surface)] body-sm font-medium text-[var(--color-ink-secondary)] hover:bg-[var(--color-canvas-soft)] transition-colors shadow-sm"
-          >
-            <UploadCloud className="w-4 h-4 text-[var(--color-primary)]" />
-            <span className="hidden sm:inline">Import Statement</span>
-            <span className="sm:hidden">Import</span>
-          </Link>
-          <AddTransactionButton categories={categories} />
-        </div>
-      </div>
+      <PageHeader
+        title="Transactions"
+        description={`${total} transaction${total !== 1 ? "s" : ""} found`}
+        action={
+          <div className="flex items-center gap-2">
+            <Link href="/import" className="hidden sm:block">
+              <Button variant="secondary" size="sm">
+                <UploadCloud className="w-4 h-4" />
+                Import
+              </Button>
+            </Link>
+            <AddTransactionButton categories={categories} />
+          </div>
+        }
+      />
 
-      <TransactionFilters categories={categories} filters={filters} />
+      <TransactionFilters categories={categories} accounts={accounts} filters={filters} />
 
       <TransactionTable
         transactions={transactions}

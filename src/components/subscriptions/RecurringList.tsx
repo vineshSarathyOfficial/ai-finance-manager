@@ -43,17 +43,17 @@ const FREQ_LABELS: Record<string, string> = {
 };
 
 const FREQ_BADGE_COLOR: Record<string, string> = {
-  WEEKLY:    "bg-violet-500/10 text-violet-400 border-violet-500/20",
-  BIWEEKLY:  "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  MONTHLY:   "bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20",
-  QUARTERLY: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  YEARLY:    "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  WEEKLY:    "bg-[var(--color-magenta)]/10 text-[var(--color-magenta)] border-[var(--color-magenta)]/20",
+  BIWEEKLY:  "bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20",
+  MONTHLY:   "bg-[var(--color-primary-bg-subdued)] text-[var(--color-primary)] border-[var(--color-hairline)]",
+  QUARTERLY: "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/20",
+  YEARLY:    "bg-[var(--color-income)]/10 text-[var(--color-income)] border-[var(--color-income)]/20",
 };
 
 function confidenceColor(n: number) {
-  if (n >= 75) return "text-emerald-400";
-  if (n >= 50) return "text-amber-400";
-  return "text-red-400";
+  if (n >= 75) return "text-[var(--color-income)]";
+  if (n >= 50) return "text-[var(--color-warning)]";
+  return "text-[var(--color-error)]";
 }
 
 function toMonthly(amount: number, freq: string): number {
@@ -141,7 +141,7 @@ export function RecurringList({ items }: Props) {
             onClick={() => setFilter(v)}
             className={`px-3 py-1.5 rounded-[var(--radius-full)] caption font-medium border transition-all ${
               filter === v
-                ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
+                ? "bg-[var(--color-primary)] text-[var(--color-on-primary)] border-[var(--color-primary)]"
                 : "border-[var(--color-hairline)] text-[var(--color-ink-muted)] hover:border-[var(--color-primary)]/40"
             }`}
           >
@@ -185,8 +185,8 @@ export function RecurringList({ items }: Props) {
               {/* Due soon badge */}
               {dueSoon && item.isActive && (
                 <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-[var(--radius-full)] bg-amber-500/10 border border-amber-500/20">
-                  <AlertTriangle className="w-3 h-3 text-amber-400" />
-                  <span className="caption text-amber-400 font-medium">Due soon</span>
+                  <AlertTriangle className="w-3 h-3 text-[var(--color-warning)]" />
+                  <span className="caption text-[var(--color-warning)]">Due soon</span>
                 </div>
               )}
 
@@ -195,14 +195,14 @@ export function RecurringList({ items }: Props) {
                 <div
                   className={`w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center text-lg flex-shrink-0 ${
                     item.type === "INCOME"
-                      ? "bg-emerald-500/10"
+                      ? "bg-[var(--color-income-bg)]"
                       : "bg-[var(--color-primary)]/10"
                   }`}
                 >
                   {item.category?.icon ?? (item.type === "INCOME" ? "💰" : "🔄")}
                 </div>
                 <div className="flex-1 min-w-0 pr-12">
-                  <h3 className="font-semibold text-[var(--color-ink)] text-[14px] leading-snug line-clamp-2">
+                  <h3 className="body-md text-[var(--color-ink)] leading-snug line-clamp-2">
                     {item.name}
                   </h3>
                   <p className="caption text-[var(--color-ink-faint)] mt-0.5">
@@ -216,11 +216,11 @@ export function RecurringList({ items }: Props) {
                 <div>
                   <div className="flex items-center gap-1.5">
                     {item.type === "INCOME" ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                      <TrendingUp className="w-3.5 h-3.5 text-[var(--color-income)]" />
                     ) : (
                       <TrendingDown className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                     )}
-                    <span className="font-bold text-[var(--color-ink)] text-[16px]">
+                    <span className="body-tabular text-[var(--color-ink)] text-[16px]">
                       {formatCurrency(Number(item.amount))}
                     </span>
                   </div>
@@ -269,9 +269,9 @@ export function RecurringList({ items }: Props) {
                   {isLoading ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : item.isActive ? (
-                    <XCircle className="w-3.5 h-3.5 text-amber-400" />
+                    <XCircle className="w-3.5 h-3.5 text-[var(--color-warning)]" />
                   ) : (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-income)]" />
                   )}
                   {item.isActive ? "Pause" : "Resume"}
                 </button>

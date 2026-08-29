@@ -1,28 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <defs>
-    <linearGradient id="finpulseGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor="#0075DE" />
-      <stop offset="60%" stopColor="#00B4D8" />
-      <stop offset="100%" stopColor="#10B981" />
-    </linearGradient>
-    <linearGradient id="pulseGlow" x1="4" y1="16" x2="28" y2="16" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.8" />
-      <stop offset="100%" stopColor="#FFFFFF" stopOpacity="1" />
-    </linearGradient>
-  </defs>
-
-  <!-- Background Squircle -->
-  <rect width="32" height="32" rx="8" fill="url(#finpulseGrad)" />
-
-  <!-- FinPulse Dynamic Heartbeat / Wealth Wave -->
+  <rect width="32" height="32" rx="8" fill="#0075DE" />
   <path
     d="M6 16.5H10.5L13.5 10.5L17.5 22.5L20.5 14L22.5 16.5H26"
-    stroke="url(#pulseGlow)"
+    stroke="white"
     stroke-width="2.5"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-
-  <!-- Trending Pulse Node -->
   <circle cx="20.5" cy="14" r="2" fill="#FFFFFF" />
 </svg>

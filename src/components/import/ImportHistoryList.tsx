@@ -31,7 +31,7 @@ export function ImportHistoryList({ imports }: ImportHistoryListProps) {
             className="flex items-center justify-between px-5 py-3.5 hover:bg-[var(--color-canvas-soft)] transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[var(--color-primary)]">
+              <div className="w-8 h-8 rounded-full bg-[var(--color-primary-bg-subdued)]/30 flex items-center justify-center text-[var(--color-primary)]">
                 <FileSpreadsheet className="w-4 h-4" />
               </div>
               <div>

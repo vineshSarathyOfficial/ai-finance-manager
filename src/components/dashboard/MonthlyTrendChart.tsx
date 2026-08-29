@@ -84,8 +84,8 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
               iconType="circle"
               iconSize={8}
             />
-            <Bar dataKey="income" name="Income" fill="var(--color-accent-green)" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="expenses" name="Expenses" fill="var(--color-error)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="income" name="Income" fill="var(--color-income)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="expenses" name="Expenses" fill="var(--color-ink)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       )}

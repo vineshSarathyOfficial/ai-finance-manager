@@ -11,6 +11,21 @@ enum TransactionType {
   EXPENSE
 }
 
+enum AccountType {
+  BANK
+  CREDIT_CARD
+  CASH
+  OTHER
+}
+
+enum TransactionKind {
+  REGULAR
+  TRANSFER
+  REFUND
+  CC_PAYMENT
+  EXCLUDED
+}
+
 enum ImportStatus {
   PENDING
   PROCESSED
@@ -33,7 +48,6 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  // Google / Gmail Integration
   googleConnected    Boolean   @default(false)
   googleEmail        String?
   googleAccessToken  String?
@@ -45,6 +59,25 @@ model User {
   transactions          Transaction[]
   statementImports      StatementImport[]
   recurringTransactions RecurringTransaction[]
+  accounts              Account[]
+  budgets               Budget[]
+}
+
+model Account {
+  id          String      @id @default(cuid())
+  userId      String
+  name        String
+  type        AccountType @default(BANK)
+  institution String?
+  lastFour    String?
+  isDefault   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
 }
 
 model Category {
@@ -58,33 +91,43 @@ model Category {
   user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions          Transaction[]
   recurringTransactions RecurringTransaction[]
+  budgets               Budget[]
 
   @@unique([userId, name, type])
 }
 
 model Transaction {
-  id              String          @id @default(cuid())
-  userId          String
-  type            TransactionType
-  amount          Decimal         @db.Decimal(12, 2)
-  description     String
-  categoryId      String
-  transactionDate DateTime
-  paymentMethod   String?
-  notes           String?
-  importId        String?
-  source          String?         @default("MANUAL")
-  emailMessageId  String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id                  String          @id @default(cuid())
+  userId              String
+  type                TransactionType
+  amount              Decimal         @db.Decimal(12, 2)
+  description         String
+  categoryId          String
+  transactionDate     DateTime
+  paymentMethod       String?
+  notes               String?
+  importId            String?
+  source              String?         @default("MANUAL")
+  emailMessageId      String?
+  accountId           String?
+  merchantName        String?
+  transactionKind     TransactionKind @default(REGULAR)
+  linkedTransactionId String?
+  excludeFromTotals   Boolean         @default(false)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   category        Category         @relation(fields: [categoryId], references: [id])
   statementImport StatementImport? @relation(fields: [importId], references: [id])
+  account         Account?         @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
   @@index([userId, emailMessageId])
   @@index([userId, transactionDate])
   @@index([userId, categoryId])
+  @@index([userId, accountId])
+  @@index([userId, merchantName])
+  @@index([userId, transactionKind])
 }
 
 model StatementImport {
@@ -112,11 +155,8 @@ model RecurringTransaction {
   nextDueDate DateTime?
   lastSeenAt  DateTime?
   isActive    Boolean         @default(true)
-  /// Raw description snippet used to match transactions
   matchKey    String
-  /// Number of times detected in transaction history
   occurrences Int             @default(0)
-  /// Confidence 0-100 derived from amount consistency + interval regularity
   confidence  Int             @default(0)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -126,4 +166,19 @@ model RecurringTransaction {
 
   @@unique([userId, matchKey])
   @@index([userId, isActive])
+}
+
+model Budget {
+  id           String   @id @default(cuid())
+  userId       String
+  categoryId   String
+  monthlyLimit Decimal  @db.Decimal(12, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
+  @@index([userId])
 }

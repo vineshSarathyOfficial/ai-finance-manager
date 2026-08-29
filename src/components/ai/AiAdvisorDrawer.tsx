@@ -1,36 +1,51 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from "react";
-import { Sparkles, Send, X, Bot, User, Loader2, Key, HelpCircle, ChevronRight, RefreshCcw } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  Sparkles,
+  Send,
+  X,
+  Key,
+  RotateCcw,
+  ChevronRight,
+  Loader2,
+  ExternalLink,
+} from "lucide-react";
 import { askFinancialCopilotAction, type ChatMessage } from "@/actions/ai";
-
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { useAiCopilot } from "./AiCopilotContext";
+import { AiMessageContent } from "./AiMessageContent";
+import { cn } from "@/lib/utils";
 
 const SUGGESTED_PROMPTS = [
-  "How much did I spend this month vs last month?",
-  "Where can I cut expenses to save ₹10,000?",
-  "Audit my active subscriptions & recurring bills",
-  "What is my highest spending category this month?",
+  { label: "Month vs month", prompt: "How much did I spend this month vs last month?" },
+  { label: "Cut expenses", prompt: "Where can I cut expenses to save ₹10,000?" },
+  { label: "Subscriptions", prompt: "Audit my active subscriptions & recurring bills" },
+  { label: "Top category", prompt: "What is my highest spending category this month?" },
 ];
 
-export function AiAdvisorDrawer({ isOpen, onClose }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "model",
-      content:
-        "👋 Hello! I am your **FinPulse AI Copilot**. I have access to your live financial dashboard, recent transactions, categories, and subscriptions.\n\nAsk me anything about your spending, or tap a suggestion below!",
-    },
-  ]);
+const WELCOME_MESSAGE: ChatMessage = {
+  role: "model",
+  content:
+    "Hi — I'm **FinPulse AI**. I can read your transactions, categories, and recurring bills to answer questions about spending, savings, and budgets.\n\nPick a suggestion below or type your own question.",
+};
+
+const STICKER_DOTS = [
+  "bg-[var(--color-accent-sky)]",
+  "bg-[var(--color-accent-purple)]",
+  "bg-[var(--color-accent-pink)]",
+  "bg-[var(--color-accent-teal)]",
+];
+
+export function AiAdvisorDrawer() {
+  const { isOpen, close } = useAiCopilot();
+  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isPending, startTransition] = useTransition();
   const [apiKey, setApiKey] = useState("");
-  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [showKeyPanel, setShowKeyPanel] = useState(false);
   const [keyMissingError, setKeyMissingError] = useState(false);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("finpulse_gemini_api_key");
@@ -40,13 +55,29 @@ export function AiAdvisorDrawer({ isOpen, onClose }: Props) {
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      setTimeout(() => inputRef.current?.focus(), 200);
     }
   }, [messages, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, close]);
 
   function handleSaveKey(newKey: string) {
     setApiKey(newKey);
     localStorage.setItem("finpulse_gemini_api_key", newKey);
-    setShowKeyInput(false);
+    setShowKeyPanel(false);
+    setKeyMissingError(false);
+  }
+
+  function handleNewChat() {
+    setMessages([WELCOME_MESSAGE]);
+    setInput("");
     setKeyMissingError(false);
   }
 
@@ -66,222 +97,285 @@ export function AiAdvisorDrawer({ isOpen, onClose }: Props) {
         setKeyMissingError(false);
       } else if (result.error === "GEMINI_KEY_MISSING") {
         setKeyMissingError(true);
+        setShowKeyPanel(true);
         setMessages((prev) => [
           ...prev,
           {
             role: "model",
             content:
-              "⚠️ **Gemini API Key Required**\n\nTo chat with your financial data, please enter your free Gemini API key below (or set `GEMINI_API_KEY` in your `.env` file).",
+              "**API key needed** — Add your free Gemini key to chat with your data. Tap the key icon above, or set `GEMINI_API_KEY` in your `.env` file.",
           },
         ]);
       } else {
         setMessages((prev) => [
           ...prev,
-          {
-            role: "model",
-            content: `❌ **Error:** ${result.error || "Failed to process your query."}`,
-          },
+          { role: "model", content: `**Something went wrong:** ${result.error || "Please try again."}` },
         ]);
       }
     });
   }
 
+  const showSuggestions = messages.length <= 1 && !isPending;
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex justify-end">
       <div
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+        className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+        onClick={close}
+        aria-hidden
       />
 
-      {/* Slide-over Panel */}
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-[var(--color-surface)] border-l border-[var(--color-hairline)] shadow-2xl flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-hairline)] bg-[var(--color-canvas)]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-[var(--radius-md)] bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center text-white shadow-sm">
-                <Sparkles className="w-4 h-4" />
+      <div
+        className={cn(
+          "relative flex flex-col w-full max-w-lg h-full bg-[var(--color-canvas-soft)]",
+          "border-l border-[var(--color-hairline)] shadow-level-2",
+          "animate-in slide-in-from-right duration-200"
+        )}
+        role="dialog"
+        aria-modal
+        aria-labelledby="ai-copilot-title"
+      >
+        {/* Hero header — Notion night band */}
+        <div className="relative overflow-hidden bg-[var(--color-secondary)] text-[var(--color-on-primary)] px-5 pt-5 pb-6 flex-shrink-0">
+          <div className="absolute inset-0 pointer-events-none opacity-40">
+            {STICKER_DOTS.map((color, i) => (
+              <span
+                key={i}
+                className={cn("absolute rounded-full w-2 h-2", color)}
+                style={{
+                  top: `${12 + i * 18}%`,
+                  right: `${8 + i * 12}%`,
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="relative flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-[var(--radius-md)] bg-white/15 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5" />
               </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h2 className="title text-[var(--color-ink)] text-base">FinPulse AI</h2>
-                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-[var(--color-primary)] border border-blue-200 uppercase">
-                    Copilot
-                  </span>
-                </div>
-                <p className="caption text-[var(--color-ink-muted)] text-xs">
-                  Live Financial Advisor
+              <div className="min-w-0">
+                <p className="eyebrow text-white/70 mb-1">FinPulse</p>
+                <h2 id="ai-copilot-title" className="heading-3 text-white truncate">
+                  Ask AI
+                </h2>
+                <p className="caption text-white/75 mt-1">
+                  Answers from your live financial data
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setShowKeyInput(!showKeyInput)}
-                className="p-1.5 rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-canvas-soft)] transition-colors"
-                title="Configure Gemini API Key"
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              <HeaderIconButton
+                onClick={() => setShowKeyPanel((v) => !v)}
+                label="API key"
+                active={showKeyPanel || keyMissingError}
               >
                 <Key className="w-4 h-4" />
-              </button>
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-[var(--radius-sm)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-canvas-soft)] transition-colors"
-              >
+              </HeaderIconButton>
+              <HeaderIconButton onClick={handleNewChat} label="New chat">
+                <RotateCcw className="w-4 h-4" />
+              </HeaderIconButton>
+              <HeaderIconButton onClick={close} label="Close">
                 <X className="w-5 h-5" />
+              </HeaderIconButton>
+            </div>
+          </div>
+        </div>
+
+        {/* API key panel */}
+        {(showKeyPanel || keyMissingError) && (
+          <div className="flex-shrink-0 px-4 py-3 bg-[var(--color-surface)] border-b border-[var(--color-hairline)]">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div>
+                <p className="body-sm font-medium text-[var(--color-ink)]">Gemini API key</p>
+                <p className="caption text-[var(--color-ink-muted)] mt-0.5">
+                  Free from{" "}
+                  <a
+                    href="https://aistudio.google.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[var(--color-primary)] inline-flex items-center gap-0.5 hover:underline"
+                  >
+                    Google AI Studio
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowKeyPanel(false);
+                  setKeyMissingError(false);
+                }}
+                className="p-1 text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="AIzaSy..."
+                className="flex-1 px-2 py-1.5 rounded-[var(--radius-xs)] border border-[var(--color-hairline-input)] bg-[var(--color-surface)] body-sm text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-primary)] shadow-level-1"
+              />
+              <button
+                type="button"
+                onClick={() => handleSaveKey(apiKey)}
+                className="px-4 py-1.5 rounded-[var(--radius-full)] bg-[var(--color-primary)] text-[var(--color-on-primary)] button-sm hover:bg-[var(--color-primary-active)] transition-colors"
+              >
+                Save
               </button>
             </div>
           </div>
+        )}
 
-          {/* Optional API Key Input Banner */}
-          {(showKeyInput || keyMissingError) && (
-            <div className="p-4 bg-blue-50/70 border-b border-blue-200">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div>
-                  <p className="body-sm font-semibold text-blue-950">Enter Gemini API Key</p>
-                  <p className="caption text-blue-800 mt-0.5">
-                    Free from{" "}
-                    <a
-                      href="https://aistudio.google.com/"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline font-medium hover:text-blue-900"
-                    >
-                      Google AI Studio
-                    </a>
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowKeyInput(false);
-                    setKeyMissingError(false);
-                  }}
-                  className="text-blue-700 hover:text-blue-950 p-1"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4 min-h-0">
+          {messages.map((msg, idx) => (
+            <MessageRow key={idx} message={msg} />
+          ))}
 
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="flex-1 px-3 py-1.5 rounded-[var(--radius-sm)] border border-blue-300 bg-white text-xs text-[var(--color-ink)] focus:outline-none focus:border-blue-500"
-                />
-                <button
-                  onClick={() => handleSaveKey(apiKey)}
-                  className="px-3 py-1.5 rounded-[var(--radius-sm)] bg-[var(--color-primary)] text-white text-xs font-medium hover:bg-[var(--color-primary-active)] transition-colors"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          )}
+          {isPending && <TypingIndicator />}
 
-          {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                {msg.role === "model" && (
-                  <div className="w-7 h-7 rounded-full bg-blue-50 text-[var(--color-primary)] border border-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                )}
-
-                <div
-                  className={`max-w-[85%] rounded-[var(--radius-lg)] p-3.5 body-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "bg-[var(--color-canvas)] border border-[var(--color-hairline)] text-[var(--color-ink)] whitespace-pre-wrap shadow-xs"
-                  }`}
-                >
-                  {msg.content}
-                </div>
-
-                {msg.role === "user" && (
-                  <div className="w-7 h-7 rounded-full bg-[var(--color-canvas-soft)] text-[var(--color-ink)] border border-[var(--color-hairline)] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <User className="w-4 h-4" />
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {isPending && (
-              <div className="flex gap-3 justify-start">
-                <div className="w-7 h-7 rounded-full bg-blue-50 text-[var(--color-primary)] border border-blue-100 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <div className="bg-[var(--color-canvas)] border border-[var(--color-hairline)] rounded-[var(--radius-lg)] p-3.5 flex items-center gap-2 text-[var(--color-ink-muted)] caption shadow-xs">
-                  <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary)]" />
-                  <span>Analyzing financial data...</span>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick Suggested Prompts */}
-          {messages.length <= 2 && (
-            <div className="p-3 border-t border-[var(--color-hairline)] bg-[var(--color-canvas)]/50 space-y-1.5">
-              <p className="caption text-[var(--color-ink-muted)] font-medium px-1">
-                Suggested Questions:
-              </p>
-              <div className="flex flex-col gap-1">
-                {SUGGESTED_PROMPTS.map((prompt) => (
+          {showSuggestions && (
+            <div className="pt-2">
+              <p className="eyebrow text-[var(--color-ink-faint)] mb-2">Try asking</p>
+              <div className="flex flex-wrap gap-2">
+                {SUGGESTED_PROMPTS.map(({ label, prompt }) => (
                   <button
                     key={prompt}
+                    type="button"
                     onClick={() => handleSend(prompt)}
-                    disabled={isPending}
-                    className="text-left px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-surface)] text-xs text-[var(--color-ink-secondary)] hover:bg-[var(--color-canvas-soft)] hover:text-[var(--color-ink)] transition-colors flex items-center justify-between group"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-full)] bg-[var(--color-surface)] border border-[var(--color-hairline)] text-[var(--color-primary)] badge-text hover:bg-[var(--color-canvas)] hover:shadow-level-1 transition-all group"
                   >
-                    <span>{prompt}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-[var(--color-ink-faint)] group-hover:translate-x-0.5 transition-transform" />
+                    {label}
+                    <ChevronRight className="w-3 h-3 opacity-50 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Input Box */}
-          <div className="p-4 border-t border-[var(--color-hairline)] bg-[var(--color-surface)]">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex items-center gap-2"
-            >
-              <input
-                id="ai-copilot-input"
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about spending, budgets, savings..."
-                disabled={isPending}
-                className="flex-1 px-4 py-2.5 rounded-[var(--radius-full)] border border-[var(--color-hairline)] bg-[var(--color-canvas-soft)] text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:outline-none focus:border-[var(--color-primary)] focus:bg-white transition-colors"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim() || isPending}
-                className="w-10 h-10 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center hover:bg-[var(--color-primary-active)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 shadow-sm"
-              >
-                {isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4 ml-0.5" />
-                )}
-              </button>
-            </form>
-          </div>
+          <div ref={messagesEndRef} />
         </div>
+
+        {/* Composer */}
+        <div className="flex-shrink-0 p-4 bg-[var(--color-surface)] border-t border-[var(--color-hairline)] safe-area-bottom">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
+            className="flex items-end gap-2"
+          >
+            <textarea
+              ref={inputRef}
+              id="ai-copilot-input"
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Ask about spending, budgets, savings…"
+              disabled={isPending}
+              className="flex-1 min-h-[44px] max-h-32 px-3 py-2.5 rounded-[var(--radius-xs)] border border-[var(--color-hairline-input)] bg-[var(--color-canvas-soft)] body-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:outline-none focus:border-[var(--color-primary)] focus:bg-[var(--color-surface)] focus:shadow-level-1 resize-none transition-all"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || isPending}
+              className="h-11 w-11 flex-shrink-0 rounded-[var(--radius-full)] bg-[var(--color-primary)] text-[var(--color-on-primary)] flex items-center justify-center hover:bg-[var(--color-primary-active)] active:scale-[0.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-level-1"
+              aria-label="Send message"
+            >
+              {isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </button>
+          </form>
+          <p className="caption text-[var(--color-ink-faint)] text-center mt-2">
+            AI can make mistakes — verify important numbers.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HeaderIconButton({
+  children,
+  onClick,
+  label,
+  active,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  label: string;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={cn(
+        "p-2 rounded-[var(--radius-sm)] text-white/80 hover:text-white hover:bg-white/10 transition-colors",
+        active && "bg-white/15 text-white"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function MessageRow({ message }: { message: ChatMessage }) {
+  const isUser = message.role === "user";
+
+  return (
+    <div className={cn("flex gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}>
+      {!isUser && (
+        <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-accent-purple-bg)] flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Sparkles className="w-4 h-4 text-[var(--color-accent-purple-deep)]" />
+        </div>
+      )}
+
+      <div
+        className={cn(
+          "max-w-[88%] rounded-[var(--radius-lg)] px-4 py-3",
+          isUser
+            ? "bg-[var(--color-primary)] text-[var(--color-on-primary)]"
+            : "bg-[var(--color-surface)] border border-[var(--color-hairline)] text-[var(--color-ink)] shadow-level-1"
+        )}
+      >
+        {isUser ? (
+          <p className="body-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+        ) : (
+          <AiMessageContent content={message.content} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div className="flex gap-2.5">
+      <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-accent-purple-bg)] flex items-center justify-center flex-shrink-0">
+        <Sparkles className="w-4 h-4 text-[var(--color-accent-purple-deep)]" />
+      </div>
+      <div className="bg-[var(--color-surface)] border border-[var(--color-hairline)] rounded-[var(--radius-lg)] px-4 py-3 flex items-center gap-2 shadow-level-1">
+        <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary)]" />
+        <span className="caption text-[var(--color-ink-muted)]">Thinking…</span>
       </div>
     </div>
   );

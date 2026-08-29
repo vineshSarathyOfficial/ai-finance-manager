@@ -6,10 +6,12 @@ import {
   getNetWorthTrend,
   getDailySpendHeatmap,
   getTopMerchants,
+  getCategoryMonthOverMonth,
+  getAccountSpending,
+  getDashboardSummary,
 } from "@/lib/db/dashboard";
-import { prisma } from "@/lib/db/prisma";
 import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts";
-import { BarChart2 } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const metadata: Metadata = {
   title: "Analytics",
@@ -18,82 +20,46 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function AnalyticsPage() {
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function AnalyticsPage({ searchParams }: PageProps) {
   const userId = await getRequiredUserId();
+  const sp = await searchParams;
 
   const [
-    trend,
-    categorySpend,
-    monthlyCategoryData,
-    netWorthTrend,
-    dailyHeatmap,
-    topMerchants,
+    trend, categorySpend, categoryMoM, netWorthTrend,
+    dailyHeatmap, topMerchants, accountSpending, summary,
   ] = await Promise.all([
     getMonthlyTrend(userId, 6),
     getCategorySpend(userId),
-    getMonthlyCategoryBreakdown(userId),
+    getCategoryMonthOverMonth(userId),
     getNetWorthTrend(userId, 6),
     getDailySpendHeatmap(userId),
-    getTopMerchants(userId, 6),
+    getTopMerchants(userId, 10),
+    getAccountSpending(userId),
+    getDashboardSummary(userId),
   ]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="heading-2 text-[var(--color-ink)] flex items-center gap-2.5">
-          <BarChart2 className="w-6 h-6 text-[var(--color-primary)]" />
-          Analytics
-        </h1>
-        <p className="body-sm text-[var(--color-ink-muted)] mt-1">
-          Spending patterns and trends across your transactions
-        </p>
-      </div>
+      <PageHeader
+        title="Analytics"
+        description="Spending patterns and trends across your transactions"
+      />
 
       <AnalyticsCharts
         trend={trend}
         categorySpend={categorySpend}
-        monthlyCategoryData={monthlyCategoryData}
+        categoryMoM={categoryMoM}
         netWorthTrend={netWorthTrend}
         dailyHeatmap={dailyHeatmap}
         topMerchants={topMerchants}
+        accountSpending={accountSpending}
+        summary={summary}
+        initialTab={typeof sp.tab === "string" ? sp.tab : undefined}
       />
     </div>
   );
-}
-
-async function getMonthlyCategoryBreakdown(userId: string) {
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-  sixMonthsAgo.setDate(1);
-
-  const transactions = await prisma.transaction.findMany({
-    where: {
-      userId,
-      type: "EXPENSE",
-      transactionDate: { gte: sixMonthsAgo },
-    },
-    select: {
-      amount: true,
-      transactionDate: true,
-      category: { select: { name: true } },
-    },
-  });
-
-  // Group by month + category
-  const map = new Map<string, Map<string, number>>();
-  for (const t of transactions) {
-    const monthKey = new Intl.DateTimeFormat("en-IN", {
-      month: "short",
-      year: "2-digit",
-    }).format(new Date(t.transactionDate));
-
-    if (!map.has(monthKey)) map.set(monthKey, new Map());
-    const catMap = map.get(monthKey)!;
-    catMap.set(t.category.name, (catMap.get(t.category.name) || 0) + t.amount.toNumber());
-  }
-
-  return Array.from(map.entries()).map(([month, cats]) => ({
-    month,
-    ...Object.fromEntries(cats),
-  }));
 }

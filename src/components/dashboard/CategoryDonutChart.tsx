@@ -8,14 +8,14 @@ interface CategoryDonutChartProps {
 }
 
 const COLORS = [
-  "var(--color-primary)",
-  "var(--color-accent-teal)",
-  "var(--color-accent-orange)",
-  "var(--color-accent-purple)",
   "var(--color-accent-sky)",
-  "var(--color-accent-green)",
+  "var(--color-accent-purple)",
   "var(--color-accent-pink)",
-  "#f59e0b",
+  "var(--color-accent-orange)",
+  "var(--color-accent-teal)",
+  "var(--color-accent-green)",
+  "var(--color-accent-brown)",
+  "var(--color-accent-purple-deep)",
 ];
 
 const CustomTooltip = ({
@@ -44,7 +44,7 @@ export function CategoryDonutChart({ data }: CategoryDonutChartProps) {
   const isEmpty = data.length === 0;
 
   return (
-    <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-5 shadow-level-1 h-full">
+    <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] p-5 shadow-level-1">
       <h2 className="title text-[var(--color-ink)] mb-4">Expenses by Category</h2>
       {isEmpty ? (
         <div className="flex items-center justify-center h-52 text-[var(--color-ink-faint)] caption">
