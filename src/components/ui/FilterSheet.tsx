@@ -1,7 +1,8 @@
 "use client";
 
-import { SlidersHorizontal } from "lucide-react";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "./Button";
 import { Sheet } from "./Sheet";
 
@@ -48,11 +49,48 @@ export function FilterSheet({ activeCount, onClear, children }: FilterSheetProps
   );
 }
 
-export function FilterBar({ children, className }: { children: ReactNode; className?: string }) {
+export function FilterBar({
+  children,
+  className,
+  activeCount = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  activeCount?: number;
+}) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className={`hidden lg:block ${className ?? ""}`}>
-      <div className="bg-[var(--color-surface-card)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] p-4">
-        <div className="flex flex-wrap gap-3">{children}</div>
+    <div className={cn("hidden lg:block", className)}>
+      <div className="bg-[var(--color-surface-card)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-[var(--color-canvas-soft)] transition-colors"
+        >
+          <span className="flex items-center gap-2 body-sm font-medium text-[var(--color-ink)]">
+            <SlidersHorizontal className="w-4 h-4 text-[var(--color-ink-muted)]" />
+            Filters
+            {activeCount > 0 && (
+              <span className="bg-[var(--color-primary)] text-white text-xs rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center">
+                {activeCount}
+              </span>
+            )}
+          </span>
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 text-[var(--color-ink-muted)] transition-transform flex-shrink-0",
+              open && "rotate-180"
+            )}
+          />
+        </button>
+
+        {open && (
+          <div className="px-4 pb-4 pt-1 border-t border-[var(--color-hairline)]">
+            <div className="flex flex-wrap gap-3 items-center">{children}</div>
+          </div>
+        )}
       </div>
     </div>
   );

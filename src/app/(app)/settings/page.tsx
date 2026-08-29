@@ -5,6 +5,7 @@ import { User, Lock, LogOut, Database, Wallet } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SettingsExportButton } from "@/components/settings/SettingsExportButton";
+import { SettingsPdfExport } from "@/components/settings/SettingsPdfExport";
 import { SettingsDangerZone } from "@/components/settings/SettingsDangerZone";
 import { SettingsAiCard } from "@/components/settings/SettingsAiCard";
 import { AppearanceSettingsCard } from "@/components/settings/AppearanceSettingsCard";
@@ -75,14 +76,26 @@ export default async function SettingsPage() {
           <Database className="w-4 h-4 text-[var(--color-ink-faint)]" />
           <h2 className="title text-[var(--color-ink)]">Your Data</h2>
         </div>
-        <div className="px-5 py-4 flex items-center justify-between gap-4">
-          <div>
-            <p className="body-sm text-[var(--color-ink)]">Export all transactions as CSV</p>
-            <p className="caption text-[var(--color-ink-muted)] mt-0.5">
-              {txCount} transaction{txCount !== 1 ? "s" : ""} · includes date, amount, category, description
-            </p>
+        <div className="px-5 py-4 space-y-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="body-sm text-[var(--color-ink)]">Export all transactions as CSV</p>
+              <p className="caption text-[var(--color-ink-muted)] mt-0.5">
+                {txCount} transaction{txCount !== 1 ? "s" : ""} · includes date, amount, category, description
+              </p>
+            </div>
+            <SettingsExportButton />
           </div>
-          <SettingsExportButton />
+
+          <div className="border-t border-[var(--color-hairline)] pt-5">
+            <div className="mb-3">
+              <p className="body-sm text-[var(--color-ink)]">Export transactions as PDF</p>
+              <p className="caption text-[var(--color-ink-muted)] mt-0.5">
+                Download a summary report for the current month or a custom date range
+              </p>
+            </div>
+            <SettingsPdfExport />
+          </div>
         </div>
       </div>
 

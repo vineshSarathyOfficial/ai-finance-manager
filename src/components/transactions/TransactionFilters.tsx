@@ -139,7 +139,7 @@ export function TransactionFilters({ categories, accounts, filters }: Transactio
 
   return (
     <div>
-      <FilterBar>
+      <FilterBar activeCount={activeCount}>
         <FilterControls categories={categories} accounts={accounts} filters={filters} update={update} />
         {activeCount > 0 && (
           <button onClick={clearAll} className="flex items-center gap-1 body-sm text-[var(--color-primary)] h-12 px-3">
