@@ -69,6 +69,8 @@ model User {
   accounts              Account[]
   budgets               Budget[]
   insightReports        InsightReport[]
+  categoryRules         CategoryRule[]
+  savingsGoals          SavingsGoal[]
   notificationPreference NotificationPreference?
   pushSubscriptions     PushSubscription[]
   notificationDeliveries NotificationDeliveryLog[]
@@ -103,6 +105,8 @@ model Category {
   transactions          Transaction[]
   recurringTransactions RecurringTransaction[]
   budgets               Budget[]
+  categoryRules         CategoryRule[]
+  transactionSplits     TransactionSplit[]
 
   @@unique([userId, name, type])
 }
@@ -132,6 +136,7 @@ model Transaction {
   category        Category         @relation(fields: [categoryId], references: [id])
   statementImport StatementImport? @relation(fields: [importId], references: [id])
   account         Account?         @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  splits          TransactionSplit[]
 
   @@index([userId, emailMessageId])
   @@index([userId, transactionDate])
@@ -252,4 +257,49 @@ model NotificationDeliveryLog {
 
   @@unique([userId, period, periodKey, channel])
   @@index([userId, sentAt])
+}
+
+model CategoryRule {
+  id         String          @id @default(cuid())
+  userId     String
+  keyword    String
+  categoryId String
+  type       TransactionType
+  priority   Int             @default(0)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, keyword, type])
+  @@index([userId])
+}
+
+model SavingsGoal {
+  id            String    @id @default(cuid())
+  userId        String
+  name          String
+  targetAmount  Decimal   @db.Decimal(12, 2)
+  currentAmount Decimal   @default(0) @db.Decimal(12, 2)
+  targetDate    DateTime?
+  icon          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model TransactionSplit {
+  id            String  @id @default(cuid())
+  transactionId String
+  categoryId    String
+  amount        Decimal @db.Decimal(12, 2)
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  category    Category    @relation(fields: [categoryId], references: [id])
+
+  @@index([transactionId])
 }

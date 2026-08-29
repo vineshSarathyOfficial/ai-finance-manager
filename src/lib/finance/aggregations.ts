@@ -22,12 +22,35 @@ export async function getCategorySpend(
       excludeFromTotals: false,
       transactionKind: { notIn: EXCLUDED_KINDS },
     },
-    select: { amount: true, category: { select: { id: true, name: true, icon: true } } },
+    select: {
+      amount: true,
+      category: { select: { id: true, name: true, icon: true } },
+      splits: { include: { category: { select: { id: true, name: true, icon: true } } } },
+    },
   });
 
   const byCategory = new Map<string, { id: string; name: string; icon: string | null; amount: number }>();
 
   for (const t of transactions) {
+    if (t.splits.length > 0) {
+      for (const split of t.splits) {
+        const key = split.category.name;
+        const existing = byCategory.get(key);
+        const amt = split.amount.toNumber();
+        if (existing) {
+          existing.amount += amt;
+        } else {
+          byCategory.set(key, {
+            id: split.category.id,
+            name: split.category.name,
+            icon: split.category.icon,
+            amount: amt,
+          });
+        }
+      }
+      continue;
+    }
+
     const key = t.category.name;
     const existing = byCategory.get(key);
     if (existing) {

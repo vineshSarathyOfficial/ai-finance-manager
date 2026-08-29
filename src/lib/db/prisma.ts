@@ -24,8 +24,29 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const prisma: PrismaClient = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+/** Detect stale global Prisma client after `prisma generate` without dev server restart */
+function isStalePrismaClient(client: PrismaClient): boolean {
+  return !("savingsGoal" in client) || !("categoryRule" in client) || !("transactionSplit" in client);
 }
+
+function getPrismaClient(): PrismaClient {
+  const cached = globalForPrisma.prisma;
+  if (cached && (process.env.NODE_ENV === "production" || !isStalePrismaClient(cached))) {
+    return cached;
+  }
+
+  const client = createPrismaClient();
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client;
+  }
+  return client;
+}
+
+/** Lazy proxy so dev picks up `prisma generate` without a full server restart */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const client = getPrismaClient();
+    const value = Reflect.get(client, prop, receiver);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});

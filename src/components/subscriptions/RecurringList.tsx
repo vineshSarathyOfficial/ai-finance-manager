@@ -12,10 +12,13 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { toggleRecurringActiveAction, deleteRecurringAction } from "@/actions/recurring";
-import type { Frequency } from "@/types/finance";
+import { RecurringFormModal, type RecurringFormItem } from "./RecurringFormModal";
+import type { Category } from "@/types/finance";
+import type { Frequency } from "@prisma/client";
 
 interface RecurringItem {
   id: string;
@@ -27,11 +30,13 @@ interface RecurringItem {
   isActive: boolean;
   occurrences: number;
   confidence: number;
+  categoryId: string | null;
   category: { name: string; icon: string | null } | null;
 }
 
 interface Props {
   items: RecurringItem[];
+  categories: Category[];
 }
 
 const FREQ_LABELS: Record<string, string> = {
@@ -86,11 +91,12 @@ function formatDate(d: Date | null) {
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short" }).format(new Date(d));
 }
 
-export function RecurringList({ items }: Props) {
+export function RecurringList({ items, categories }: Props) {
   const [filter, setFilter] = useState<"all" | "EXPENSE" | "INCOME">("all");
   const [freqFilter, setFreqFilter] = useState<string>("all");
   const [pending, startTransition] = useTransition();
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [editItem, setEditItem] = useState<RecurringFormItem | null>(null);
 
   const filtered = items.filter((item) => {
     if (filter !== "all" && item.type !== filter) return false;
@@ -262,6 +268,23 @@ export function RecurringList({ items }: Props) {
               {/* Actions */}
               <div className="flex items-center gap-2 pt-1 border-t border-[var(--color-hairline)]">
                 <button
+                  onClick={() =>
+                    setEditItem({
+                      id: item.id,
+                      name: item.name,
+                      type: item.type,
+                      amount: Number(item.amount),
+                      frequency: item.frequency as Frequency,
+                      categoryId: item.categoryId,
+                      nextDueDate: item.nextDueDate,
+                    })
+                  }
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[var(--radius-md)] caption font-medium border border-[var(--color-hairline)] hover:bg-[var(--color-canvas-soft)] transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Edit
+                </button>
+                <button
                   onClick={() => handleToggle(item.id, item.isActive)}
                   disabled={isLoading}
                   className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[var(--radius-md)] caption font-medium border border-[var(--color-hairline)] hover:bg-[var(--color-canvas-soft)] transition-colors disabled:opacity-50"
@@ -287,6 +310,16 @@ export function RecurringList({ items }: Props) {
           );
         })}
       </div>
+
+      {editItem && (
+        <RecurringFormModal
+          open
+          onClose={() => setEditItem(null)}
+          categories={categories}
+          mode="edit"
+          item={editItem}
+        />
+      )}
     </div>
   );
 }

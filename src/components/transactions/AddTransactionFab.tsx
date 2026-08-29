@@ -5,8 +5,9 @@ import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { getCategoriesAction } from "@/actions/categories";
+import { getAccountsAction } from "@/actions/accounts";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/types/finance";
+import type { Category, Account } from "@/types/finance";
 
 const TransactionFormModal = dynamic(
   () =>
@@ -19,18 +20,20 @@ const TransactionFormModal = dynamic(
 export function AddTransactionFab() {
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<Category[] | null>(null);
+  const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleOpen = async () => {
     if (loading) return;
 
-    if (!categories) {
+    if (!categories || !accounts) {
       setLoading(true);
       try {
-        const data = await getCategoriesAction();
-        setCategories(data);
+        const [cats, accts] = await Promise.all([getCategoriesAction(), getAccountsAction()]);
+        setCategories(cats);
+        setAccounts(accts);
       } catch {
-        toast.error("Could not load categories. Please try again.");
+        toast.error("Could not load form data. Please try again.");
         setLoading(false);
         return;
       }
@@ -62,11 +65,12 @@ export function AddTransactionFab() {
         <Plus className="w-5 h-5" strokeWidth={2.5} />
       </button>
 
-      {open && categories && (
+      {open && categories && accounts && (
         <TransactionFormModal
           open
           onClose={() => setOpen(false)}
           categories={categories}
+          accounts={accounts}
           mode="create"
         />
       )}

@@ -5,6 +5,16 @@ import { prisma } from "@/lib/db/prisma";
 import { getRequiredUserId } from "@/lib/auth/session";
 import { detectRecurringPatterns } from "@/lib/recurring/detector";
 import type { Frequency } from "@prisma/client";
+import { z } from "zod";
+
+const recurringSchema = z.object({
+  name: z.string().min(1).max(120),
+  type: z.enum(["INCOME", "EXPENSE"]),
+  amount: z.string().refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0),
+  frequency: z.enum(["WEEKLY", "BIWEEKLY", "MONTHLY", "QUARTERLY", "YEARLY"]),
+  categoryId: z.string().optional(),
+  nextDueDate: z.string().optional(),
+});
 
 /** Serialized shape of a recurring item — safe to pass to Client Components */
 export interface SerializedRecurringItem {
@@ -199,4 +209,79 @@ export async function deleteRecurringAction(id: string): Promise<void> {
   await prisma.recurringTransaction.deleteMany({ where: { id, userId } });
   revalidatePath("/subscriptions");
   revalidatePath("/dashboard");
+}
+
+export async function createRecurringAction(formData: FormData) {
+  const userId = await getRequiredUserId();
+  const parsed = recurringSchema.safeParse({
+    name: formData.get("name"),
+    type: formData.get("type"),
+    amount: formData.get("amount"),
+    frequency: formData.get("frequency"),
+    categoryId: formData.get("categoryId") || undefined,
+    nextDueDate: formData.get("nextDueDate") || undefined,
+  });
+
+  if (!parsed.success) {
+    return { success: false, message: "Invalid recurring data." };
+  }
+
+  const matchKey = `manual-${Date.now()}-${parsed.data.name.toLowerCase().replace(/\s+/g, "-").slice(0, 30)}`;
+
+  await prisma.recurringTransaction.create({
+    data: {
+      userId,
+      name: parsed.data.name,
+      type: parsed.data.type,
+      amount: parseFloat(parsed.data.amount),
+      frequency: parsed.data.frequency as Frequency,
+      categoryId: parsed.data.categoryId || null,
+      nextDueDate: parsed.data.nextDueDate ? new Date(parsed.data.nextDueDate) : null,
+      matchKey,
+      occurrences: 0,
+      confidence: 100,
+      isActive: true,
+    },
+  });
+
+  revalidatePath("/subscriptions");
+  revalidatePath("/dashboard");
+  return { success: true, message: "Recurring item added." };
+}
+
+export async function updateRecurringAction(id: string, formData: FormData) {
+  const userId = await getRequiredUserId();
+  const parsed = recurringSchema.safeParse({
+    name: formData.get("name"),
+    type: formData.get("type"),
+    amount: formData.get("amount"),
+    frequency: formData.get("frequency"),
+    categoryId: formData.get("categoryId") || undefined,
+    nextDueDate: formData.get("nextDueDate") || undefined,
+  });
+
+  if (!parsed.success) {
+    return { success: false, message: "Invalid recurring data." };
+  }
+
+  const updated = await prisma.recurringTransaction.updateMany({
+    where: { id, userId },
+    data: {
+      name: parsed.data.name,
+      type: parsed.data.type,
+      amount: parseFloat(parsed.data.amount),
+      frequency: parsed.data.frequency as Frequency,
+      categoryId: parsed.data.categoryId || null,
+      nextDueDate: parsed.data.nextDueDate ? new Date(parsed.data.nextDueDate) : null,
+      updatedAt: new Date(),
+    },
+  });
+
+  if (updated.count === 0) {
+    return { success: false, message: "Recurring item not found." };
+  }
+
+  revalidatePath("/subscriptions");
+  revalidatePath("/dashboard");
+  return { success: true, message: "Recurring item updated." };
 }

@@ -1,6 +1,6 @@
-import type { Category, Transaction, StatementImport, TransactionType, ImportStatus, RecurringTransaction, Frequency } from "@prisma/client";
+import type { Account, Category, Transaction, StatementImport, TransactionType, ImportStatus, RecurringTransaction, Frequency } from "@prisma/client";
 
-export type { Category, Transaction, StatementImport, TransactionType, ImportStatus, RecurringTransaction, Frequency };
+export type { Account, Category, Transaction, StatementImport, TransactionType, ImportStatus, RecurringTransaction, Frequency };
 
 /**
  * TransactionWithCategory — raw Prisma shape (server-only, not for Client Components).

@@ -1,5 +1,6 @@
 import { getCategories } from "@/lib/db/categories";
 import { getCategoryHistory } from "@/lib/db/transactions";
+import { getCategoryRulesForEngine } from "@/lib/db/category-rules";
 import { categorizeTransaction } from "@/lib/categorization/engine";
 import { buildCategoryHistory } from "@/lib/categorization/history";
 import { detectDuplicates } from "@/lib/import/duplicate-detector";
@@ -95,9 +96,10 @@ export async function analyzeStatementFile(
       };
     }
 
-    const [categories, pastTransactions] = await Promise.all([
+    const [categories, pastTransactions, userRules] = await Promise.all([
       getCategories(userId),
       getCategoryHistory(userId),
+      getCategoryRulesForEngine(userId),
     ]);
     const categoryHistory = buildCategoryHistory(pastTransactions);
     const duplicates = await detectDuplicates(userId, parseResult.transactions);
@@ -119,6 +121,7 @@ export async function analyzeStatementFile(
     const transactions: AnalyzedTransaction[] = parseResult.transactions.map((tx, idx) => {
       const categorization = categorizeTransaction(tx.description, tx.type, categories, {
         history: categoryHistory,
+        userRules,
       });
       const dup = duplicates[idx] ?? { isDuplicate: false, duplicateConfidence: 0 };
       const isCrossSourceDupe = crossSourceSet.has(idx);

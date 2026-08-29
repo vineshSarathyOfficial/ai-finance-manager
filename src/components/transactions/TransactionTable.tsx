@@ -19,13 +19,14 @@ import {
   AmountColumnFilter,
   TypeColumnFilter,
 } from "./TransactionColumnHeader";
-import type { Category, SerializedTransaction } from "@/types/finance";
+import type { Category, SerializedTransaction, Account } from "@/types/finance";
 import type { TransactionFilters } from "@/lib/validations/transaction";
 import { cn } from "@/lib/utils";
 
 interface TransactionTableProps {
   transactions: SerializedTransaction[];
   categories: Category[];
+  accounts: Account[];
   filters: TransactionFilters;
   total: number;
   pageCount: number;
@@ -34,6 +35,7 @@ interface TransactionTableProps {
 export function TransactionTable({
   transactions,
   categories,
+  accounts,
   filters,
   total,
   pageCount,
@@ -501,6 +503,7 @@ export function TransactionTable({
           open={!!editTarget}
           onClose={() => setEditTarget(null)}
           categories={categories}
+          accounts={accounts}
           mode="edit"
           transaction={editTarget}
         />

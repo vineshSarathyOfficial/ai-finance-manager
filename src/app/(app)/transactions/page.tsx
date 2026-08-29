@@ -61,7 +61,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
               </Button>
             </Link>
             <div className="hidden sm:block">
-              <AddTransactionButton categories={categories} />
+              <AddTransactionButton categories={categories} accounts={accounts} />
             </div>
           </div>
         }
@@ -72,6 +72,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
       <TransactionTable
         transactions={transactions}
         categories={categories}
+        accounts={accounts}
         filters={filters}
         total={total}
         pageCount={pageCount}

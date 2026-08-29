@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useActionState, useEffect, useRef } from "react";
+import { useState, useActionState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X } from "lucide-react";
-import { createTransactionAction, updateTransactionAction } from "@/actions/transactions";
+import { createTransactionAction, updateTransactionAction, getTransactionSplitsAction } from "@/actions/transactions";
 import { formatDateInput } from "@/lib/utils";
-import type { Category, SerializedTransaction } from "@/types/finance";
+import { TransactionSplitEditor } from "./TransactionSplitEditor";
+import type { Category, SerializedTransaction, Account } from "@/types/finance";
 
 interface TransactionFormModalProps {
   open: boolean;
   onClose: () => void;
   categories: Category[];
+  accounts: Account[];
   mode: "create" | "edit";
   transaction?: SerializedTransaction;
 }
@@ -21,6 +23,7 @@ const PAYMENT_METHODS = ["UPI", "Cash", "Credit Card", "Debit Card", "Net Bankin
 interface TransactionFormModalContentProps {
   onClose: () => void;
   categories: Category[];
+  accounts: Account[];
   mode: "create" | "edit";
   transaction?: SerializedTransaction;
 }
@@ -28,6 +31,7 @@ interface TransactionFormModalContentProps {
 function TransactionFormModalContent({
   onClose,
   categories,
+  accounts,
   mode,
   transaction,
 }: TransactionFormModalContentProps) {
@@ -38,12 +42,31 @@ function TransactionFormModalContent({
   const [type, setType] = useState<"INCOME" | "EXPENSE">(() => transaction?.type ?? "EXPENSE");
   const [formKey, setFormKey] = useState(0);
   const addAnotherRef = useRef(false);
+  const [splits, setSplits] = useState<{ categoryId: string; amount: number }[]>([]);
+  const [initialSplits, setInitialSplits] = useState<{ categoryId: string; amount: number }[]>([]);
+  const handleSplitsChange = useCallback((next: { categoryId: string; amount: number }[]) => {
+    setSplits(next);
+  }, []);
 
   const filteredCategories = categories.filter((c) => c.type === type);
+  const defaultAccountId =
+    transaction?.accountId ??
+    accounts.find((a) => a.isDefault)?.id ??
+    accounts[0]?.id ??
+    "";
 
   useEffect(() => {
     amountRef.current?.focus();
   }, [formKey]);
+
+  useEffect(() => {
+    if (mode !== "edit" || !transaction?.id) return;
+    getTransactionSplitsAction(transaction.id).then((data) => {
+      const mapped = data.map((s) => ({ categoryId: s.categoryId, amount: s.amount }));
+      setInitialSplits(mapped);
+      setSplits(mapped);
+    });
+  }, [mode, transaction?.id]);
 
   useEffect(() => {
     if (!state) return;
@@ -182,6 +205,26 @@ function TransactionFormModalContent({
           </div>
 
           <div>
+            <label htmlFor="tx-account" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-1.5 block">
+              Account
+            </label>
+            <select
+              id="tx-account"
+              name="accountId"
+              defaultValue={defaultAccountId}
+              required
+              className="w-full px-3 py-2.5 rounded-[var(--radius-xs)] border border-[var(--color-hairline)] bg-[var(--color-surface)] text-[var(--color-ink)] body-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-colors"
+            >
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}{a.lastFour ? ` ••${a.lastFour}` : ""}
+                </option>
+              ))}
+            </select>
+            {err("accountId") && <p className="caption text-[var(--color-error)] mt-1">{err("accountId")}</p>}
+          </div>
+
+          <div>
             <label htmlFor="tx-date" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-1.5 block">
               Date
             </label>
@@ -230,6 +273,27 @@ function TransactionFormModalContent({
               className="w-full px-3 py-2.5 rounded-[var(--radius-xs)] border border-[var(--color-hairline)] bg-[var(--color-surface)] text-[var(--color-ink)] body-sm placeholder:text-[var(--color-ink-faint)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-colors resize-none"
             />
           </div>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" name="saveAsRule" className="rounded border-[var(--color-hairline)]" />
+            <span className="body-sm text-[var(--color-ink-muted)]">
+              Remember this categorization for similar descriptions
+            </span>
+          </label>
+
+          {mode === "edit" && transaction && (
+            <>
+              <TransactionSplitEditor
+                transactionId={transaction.id}
+                totalAmount={Number(transaction.amount)}
+                categories={categories}
+                type={type}
+                initialSplits={initialSplits}
+                onChange={handleSplitsChange}
+              />
+              <input type="hidden" name="splitsJson" value={JSON.stringify(splits)} />
+            </>
+          )}
 
           {state && !state.success && !state.errors && (
             <p className="caption text-[var(--color-error)] bg-[var(--color-error-bg)] px-3 py-2 rounded-[var(--radius-md)]">
@@ -283,6 +347,7 @@ export function TransactionFormModal({
   open,
   onClose,
   categories,
+  accounts,
   mode,
   transaction,
 }: TransactionFormModalProps) {
@@ -293,6 +358,7 @@ export function TransactionFormModal({
       key={mode === "edit" ? transaction?.id : "create"}
       onClose={onClose}
       categories={categories}
+      accounts={accounts}
       mode={mode}
       transaction={transaction}
     />

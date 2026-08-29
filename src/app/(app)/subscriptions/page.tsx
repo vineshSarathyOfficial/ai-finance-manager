@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { getRequiredUserId } from "@/lib/auth/session";
 import { getRecurringTransactions, getRecurringSummary } from "@/actions/recurring";
+import { getCategories } from "@/lib/db/categories";
 import { prisma } from "@/lib/db/prisma";
 import { RecurringSummaryCards } from "@/components/subscriptions/RecurringSummaryCards";
 import { RecurringList } from "@/components/subscriptions/RecurringList";
 import { SyncRecurringButton } from "@/components/subscriptions/SyncRecurringButton";
+import { AddRecurringButton } from "@/components/subscriptions/AddRecurringButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Info } from "lucide-react";
@@ -19,10 +21,11 @@ export const dynamic = "force-dynamic";
 export default async function SubscriptionsPage() {
   const userId = await getRequiredUserId();
 
-  const [items, summary, txCount] = await Promise.all([
+  const [items, summary, txCount, categories] = await Promise.all([
     getRecurringTransactions(userId),
     getRecurringSummary(userId),
     prisma.transaction.count({ where: { userId } }),
+    getCategories(userId),
   ]);
 
   return (
@@ -30,7 +33,12 @@ export default async function SubscriptionsPage() {
       <PageHeader
         title="Recurring"
         description="Auto-detected subscriptions, EMIs, and recurring payments"
-        action={<SyncRecurringButton hasTransactions={txCount >= 2} />}
+        action={
+          <div className="flex items-center gap-2">
+            <AddRecurringButton categories={categories} />
+            <SyncRecurringButton hasTransactions={txCount >= 2} />
+          </div>
+        }
       />
 
       <div className="flex items-start gap-3 p-4 rounded-[var(--radius-md)] bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/15">
@@ -45,7 +53,7 @@ export default async function SubscriptionsPage() {
 
       <Card padding="lg">
         <h2 className="display-sm text-[var(--color-ink)] mb-4">Detected Recurring</h2>
-        <RecurringList items={items} />
+        <RecurringList items={items} categories={categories} />
       </Card>
     </div>
   );

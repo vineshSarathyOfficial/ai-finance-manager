@@ -11,13 +11,21 @@ export interface CategorizationResult {
   matchedKeyword?: string;
 }
 
+export interface UserCategoryRule {
+  keyword: string;
+  categoryName: string;
+  type: "EXPENSE" | "INCOME";
+  confidence?: number;
+}
+
 export interface CategorizeOptions {
   history?: CategoryHistoryEntry[];
+  userRules?: UserCategoryRule[];
 }
 
 /**
  * Categorizes a transaction based on narration and type.
- * Priority: user history → merchant rules → heuristics → default.
+ * Priority: user history → user rules → merchant rules → heuristics → default.
  */
 export function categorizeTransaction(
   description: string,
@@ -40,7 +48,26 @@ export function categorizeTransaction(
     if (historyMatch) return historyMatch;
   }
 
-  // 2. High-precision rule matching (check both raw and normalized narration)
+  // 2. User-defined rules (before global merchant rules)
+  if (options.userRules?.length) {
+    for (const rule of options.userRules) {
+      if (rule.type !== type) continue;
+      if (matchesKeyword(rawLower, rule.keyword) || matchesKeyword(normalized, rule.keyword)) {
+        const targetCategory = findCategory(rule.categoryName);
+        if (targetCategory) {
+          return {
+            categoryId: targetCategory.id,
+            categoryName: targetCategory.name,
+            confidence: rule.confidence ?? 0.99,
+            matchType: "RULE",
+            matchedKeyword: rule.keyword,
+          };
+        }
+      }
+    }
+  }
+
+  // 3. High-precision rule matching (check both raw and normalized narration)
   for (const rule of MERCHANT_RULES) {
     if (rule.type !== type) continue;
 
@@ -77,11 +104,11 @@ export function categorizeTransaction(
     }
   }
 
-  // 3. Heuristic fallback for generic bank patterns
+  // 4. Heuristic fallback for generic bank patterns
   const heuristicMatch = runHeuristicClassifier(normalized, rawLower, type, availableCategories);
   if (heuristicMatch) return heuristicMatch;
 
-  // 4. Default "Other" category
+  // 5. Default "Other" category
   const defaultCategory = findCategory("Other");
   return {
     categoryId: defaultCategory?.id ?? categories[0]?.id ?? "",

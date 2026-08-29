@@ -10,6 +10,7 @@ import {
   Wallet,
   CreditCard,
   Target,
+  PiggyBank,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,6 +35,7 @@ export const secondaryNavItems: NavItem[] = [
   { href: "/accounts", label: "Accounts", icon: Wallet, moreMenu: true },
   { href: "/credit-cards", label: "Credit Cards", icon: CreditCard, moreMenu: true },
   { href: "/budgets", label: "Budgets", icon: Target, moreMenu: true },
+  { href: "/goals", label: "Savings Goals", icon: PiggyBank, moreMenu: true },
   { href: "/import", label: "Import Statement", icon: UploadCloud, moreMenu: true },
   { href: "/categories", label: "Categories", icon: Tag, moreMenu: true },
   { href: "/settings", label: "Settings", icon: Settings, moreMenu: true },
@@ -54,6 +56,7 @@ const pageTitles: Record<string, string> = {
   "/accounts": "Accounts",
   "/credit-cards": "Credit Cards",
   "/budgets": "Budgets",
+  "/goals": "Savings Goals",
   "/import": "Import",
   "/categories": "Categories",
   "/settings": "Settings",

@@ -7,6 +7,7 @@ import { getAuthenticatedGmailClient } from "@/lib/gmail/client";
 import { fetchTransactionsFromGmail } from "@/lib/gmail/fetcher";
 import { categorizeTransaction } from "@/lib/categorization/engine";
 import { getCategories } from "@/lib/db/categories";
+import { getCategoryRulesForEngine } from "@/lib/db/category-rules";
 
 export interface GmailConnectionStatus {
   connected: boolean;
@@ -110,10 +111,15 @@ export async function syncGmailTransactionsAction(range: SyncTimeRange = "CURREN
     }
 
     // 3. Categorize new items
-    const categories = await getCategories(userId);
+    const [categories, userRules] = await Promise.all([
+      getCategories(userId),
+      getCategoryRulesForEngine(userId),
+    ]);
 
     const transactionData = newItems.map((item) => {
-      const catResult = categorizeTransaction(item.description, item.type, categories);
+      const catResult = categorizeTransaction(item.description, item.type, categories, {
+        userRules,
+      });
       return {
         userId,
         type: item.type,

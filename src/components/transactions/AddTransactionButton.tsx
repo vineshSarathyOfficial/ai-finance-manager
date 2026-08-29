@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { TransactionFormModal } from "@/components/transactions/TransactionFormModal";
-import type { Category } from "@/types/finance";
+import type { Category, Account } from "@/types/finance";
 
 interface AddTransactionButtonProps {
   categories: Category[];
+  accounts: Account[];
 }
 
-export function AddTransactionButton({ categories }: AddTransactionButtonProps) {
+export function AddTransactionButton({ categories, accounts }: AddTransactionButtonProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -28,6 +29,7 @@ export function AddTransactionButton({ categories }: AddTransactionButtonProps) 
           open
           onClose={() => setOpen(false)}
           categories={categories}
+          accounts={accounts}
           mode="create"
         />
       )}
