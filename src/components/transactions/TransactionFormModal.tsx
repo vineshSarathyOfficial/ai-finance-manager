@@ -342,8 +342,8 @@ function TransactionFormModalContent({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="min-w-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
+              <div className="min-w-0 w-full">
                 <label htmlFor="tx-date" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-2 block">
                   Date
                 </label>
@@ -357,14 +357,14 @@ function TransactionFormModalContent({
                       : formatDateInput(new Date())
                   }
                   required
-                  className={fieldInput}
+                  className={cn(fieldInput, "native-date-input w-full min-w-0 max-w-full")}
                 />
                 {err("transactionDate") && (
                   <p className="caption text-[var(--color-error)] mt-1.5">{err("transactionDate")}</p>
                 )}
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 w-full">
                 <label htmlFor="tx-payment" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-2 block">
                   Payment
                 </label>
@@ -372,7 +372,7 @@ function TransactionFormModalContent({
                   id="tx-payment"
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
-                  className={fieldInput}
+                  className={cn(fieldInput, "w-full min-w-0 max-w-full")}
                 >
                   <option value="">None</option>
                   {PAYMENT_METHODS.map((m) => (
