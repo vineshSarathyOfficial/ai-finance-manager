@@ -14,8 +14,8 @@ export function MobileNav() {
 
   return (
     <>
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[var(--color-canvas)] border-t border-[var(--color-hairline)] safe-area-bottom">
-        <div className="flex items-center justify-around px-1 py-1.5">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[var(--color-canvas)]/95 backdrop-blur-sm border-t border-[var(--color-hairline)] safe-area-bottom">
+        <div className="flex items-center justify-around px-1 py-1">
           {mobileTabItems.map(({ href, mobileLabel, icon: Icon }) => {
             const active = pathname.startsWith(href);
             return (

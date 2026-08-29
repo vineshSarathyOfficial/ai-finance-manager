@@ -61,9 +61,9 @@ export function TransactionFormModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full sm:max-w-md bg-[var(--color-surface)] rounded-t-[var(--radius-xl)] sm:rounded-[var(--radius-xl)] border border-[var(--color-hairline)] shadow-level-2 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full sm:max-w-md bg-[var(--color-surface)] rounded-t-[var(--radius-xl)] sm:rounded-[var(--radius-xl)] border border-[var(--color-hairline)] shadow-level-2 max-h-[90dvh] overflow-y-auto safe-area-bottom">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-hairline)] sticky top-0 bg-[var(--color-surface)] z-10">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[var(--color-hairline)] sticky top-0 bg-[var(--color-surface)] z-10">
           <h2 id="modal-title" className="title text-[var(--color-ink)]">
             {mode === "create" ? "Add Transaction" : "Edit Transaction"}
           </h2>

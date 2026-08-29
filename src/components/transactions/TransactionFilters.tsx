@@ -28,7 +28,7 @@ function FilterControls({
 }: TransactionFiltersProps & { update: (u: Partial<TransactionFilters>) => void }) {
   return (
     <>
-      <div className="relative flex-1 min-w-[180px]">
+      <div className="relative flex-1 min-w-0 sm:min-w-[180px]">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-faint)]" />
         <input
           type="text"
@@ -45,7 +45,7 @@ function FilterControls({
       <select
         value={filters.type ?? "ALL"}
         onChange={(e) => update({ type: e.target.value as "ALL" | "INCOME" | "EXPENSE" })}
-        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm min-w-[120px]"
+        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm w-full sm:min-w-[120px]"
       >
         <option value="ALL">All Types</option>
         <option value="INCOME">Income</option>
@@ -55,7 +55,7 @@ function FilterControls({
       <select
         value={filters.categoryId ?? ""}
         onChange={(e) => update({ categoryId: e.target.value || undefined })}
-        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm min-w-[140px]"
+        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm w-full sm:min-w-[140px]"
       >
         <option value="">All Categories</option>
         {categories.map((c) => (
@@ -67,7 +67,7 @@ function FilterControls({
         <select
           value={filters.accountId ?? ""}
           onChange={(e) => update({ accountId: e.target.value || undefined })}
-          className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm min-w-[140px]"
+          className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm w-full sm:min-w-[140px]"
         >
           <option value="">All Accounts</option>
           {accounts.map((a) => (
@@ -80,19 +80,19 @@ function FilterControls({
         type="date"
         value={filters.dateFrom ?? ""}
         onChange={(e) => update({ dateFrom: e.target.value || undefined })}
-        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm"
+        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm w-full"
       />
       <input
         type="date"
         value={filters.dateTo ?? ""}
         onChange={(e) => update({ dateTo: e.target.value || undefined })}
-        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm"
+        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm w-full"
       />
 
       <select
         value={filters.sortBy}
         onChange={(e) => update({ sortBy: e.target.value as TransactionFilters["sortBy"] })}
-        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm min-w-[130px]"
+        className="h-12 px-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] body-sm w-full sm:min-w-[130px]"
       >
         <option value="transactionDate">Date</option>
         <option value="description">Description</option>
@@ -149,11 +149,24 @@ export function TransactionFilters({ categories, accounts, filters }: Transactio
       </FilterBar>
 
       <div className="lg:hidden flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-faint)]" />
+          <input
+            type="search"
+            placeholder="Search…"
+            defaultValue={filters.search ?? ""}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") update({ search: (e.target as HTMLInputElement).value });
+            }}
+            onBlur={(e) => update({ search: e.target.value })}
+            className="w-full h-11 pl-9 pr-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] text-[var(--color-ink)] body-sm placeholder:text-[var(--color-ink-faint)] focus:outline-none focus:border-[var(--color-primary)]"
+          />
+        </div>
         <FilterSheet activeCount={activeCount} onClear={clearAll}>
           <FilterControls categories={categories} accounts={accounts} filters={filters} update={update} />
         </FilterSheet>
         {activeCount > 0 && (
-          <button onClick={clearAll} className="body-sm text-[var(--color-primary)]">Clear</button>
+          <button onClick={clearAll} className="body-sm text-[var(--color-primary)] flex-shrink-0">Clear</button>
         )}
       </div>
     </div>

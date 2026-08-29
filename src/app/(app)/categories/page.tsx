@@ -14,7 +14,7 @@ export default async function CategoriesPage() {
   const expense = categories.filter((c) => c.type === "EXPENSE");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="Categories"
         description="Manage your income and expense categories"

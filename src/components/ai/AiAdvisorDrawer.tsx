@@ -138,7 +138,7 @@ export function AiAdvisorDrawer() {
         aria-labelledby="ai-copilot-title"
       >
         {/* Hero header — Notion night band */}
-        <div className="relative overflow-hidden bg-[var(--color-secondary)] text-[var(--color-on-primary)] px-5 pt-5 pb-6 flex-shrink-0">
+        <div className="relative overflow-hidden bg-[var(--color-secondary)] text-[var(--color-on-primary)] px-4 sm:px-5 pt-4 sm:pt-5 pb-5 sm:pb-6 flex-shrink-0 safe-area-top">
           <div className="absolute inset-0 pointer-events-none opacity-40">
             {STICKER_DOTS.map((color, i) => (
               <span

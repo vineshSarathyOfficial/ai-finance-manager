@@ -16,7 +16,7 @@ export function AiCopilotTrigger() {
       aria-haspopup="dialog"
       className={cn(
         "fixed z-40 transition-all active:scale-[0.97]",
-        "bottom-24 right-4 lg:bottom-6 lg:right-6",
+        "bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6",
         "lg:flex lg:items-center lg:gap-2.5 lg:pl-2 lg:pr-4 lg:py-2",
         "lg:rounded-[var(--radius-full)] lg:bg-[var(--color-surface)] lg:border lg:border-[var(--color-hairline)] lg:shadow-level-2",
         "lg:hover:bg-[var(--color-canvas)]",

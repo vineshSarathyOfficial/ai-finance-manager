@@ -58,7 +58,7 @@ export function AnalyticsCharts({
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
       <TabPanel active={activeTab === "overview"} id="overview">
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4 sm:mb-6">
           <StatCard label="Income" value={summary.incomeThisMonth} format="currency" variant="income" />
           <StatCard label="Expenses" value={summary.expensesThisMonth} format="currency" variant="expense" />
           <StatCard label="Savings Rate" value={summary.savingsRate} format="percent" variant="primary" />
@@ -72,7 +72,7 @@ export function AnalyticsCharts({
                 <Link
                   key={cat.id}
                   href={`/transactions?categoryId=${cat.id}&dateFrom=${dateFrom}&dateTo=${dateTo}`}
-                  className="flex items-center justify-between py-2.5 border-b border-[var(--color-hairline-soft)] last:border-0 hover:bg-[var(--color-surface-soft)] -mx-2 px-2 rounded-[var(--radius-sm)]"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 py-2.5 border-b border-[var(--color-hairline-soft)] last:border-0 hover:bg-[var(--color-surface-soft)] -mx-2 px-2 rounded-[var(--radius-sm)]"
                 >
                   <div>
                     <span className="body-sm text-[var(--color-ink)]">{cat.name}</span>
@@ -98,10 +98,10 @@ export function AnalyticsCharts({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card padding="md">
             <CardTitle>Spending by Category</CardTitle>
-            <div className="h-64 mt-4">
+            <div className="h-52 sm:h-64 mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={categorySpend} dataKey="amount" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
+                  <Pie data={categorySpend} dataKey="amount" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={72}>
                     {categorySpend.map((_, i) => (
                       <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                     ))}
@@ -148,7 +148,7 @@ export function AnalyticsCharts({
                   <p className="caption-sm text-[var(--color-ink-muted)]">{m.txCount} transactions</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="title-md">{formatCurrency(m.totalAmount)}</span>
+                  <span className="body-sm body-tabular">{formatCurrency(m.totalAmount)}</span>
                   <ArrowRight className="w-4 h-4 text-[var(--color-ink-faint)]" />
                 </div>
               </Link>
@@ -161,12 +161,12 @@ export function AnalyticsCharts({
         <div className="space-y-6">
           <Card padding="md">
             <CardTitle>Monthly Income vs Expenses</CardTitle>
-            <div className="h-72 mt-4">
+            <div className="h-52 sm:h-72 mt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={trend}>
+                <BarChart data={trend} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-hairline)" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                  <YAxis tick={{ fontSize: 11 }} width={40} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
                   <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                   <Bar dataKey="income" fill="var(--color-income)" name="Income" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="expenses" fill="var(--color-ink)" name="Expenses" radius={[4, 4, 0, 0]} />
@@ -178,12 +178,12 @@ export function AnalyticsCharts({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card padding="md">
               <CardTitle>Net Savings Trend</CardTitle>
-              <div className="h-56 mt-4">
+              <div className="h-44 sm:h-56 mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={netWorthTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-hairline)" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 11 }} width={40} />
                     <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                     <Line type="monotone" dataKey="cumulative" stroke="var(--color-primary)" strokeWidth={2} dot={false} />
                   </LineChart>
@@ -193,12 +193,12 @@ export function AnalyticsCharts({
 
             <Card padding="md">
               <CardTitle>Spending by Day of Week</CardTitle>
-              <div className="h-56 mt-4">
+              <div className="h-44 sm:h-56 mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={dailyHeatmap}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-hairline)" />
                     <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 11 }} width={40} />
                     <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                     <Bar dataKey="avgSpend" fill="var(--color-primary)" name="Avg Spend" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -227,7 +227,7 @@ export function AnalyticsCharts({
                     <p className="caption-sm text-[var(--color-ink-muted)]">{a.type.replace("_", " ")}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="title-md">{formatCurrency(a.amount)}</span>
+                    <span className="body-sm body-tabular">{formatCurrency(a.amount)}</span>
                     <ArrowRight className="w-4 h-4 text-[var(--color-ink-faint)]" />
                   </div>
                 </Link>

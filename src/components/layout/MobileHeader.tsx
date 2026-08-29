@@ -26,9 +26,9 @@ export function MobileHeader({ action }: { action?: React.ReactNode }) {
     "FinPulse";
 
   return (
-    <header className="lg:hidden sticky top-0 z-20 bg-[var(--color-canvas)]/95 backdrop-blur-sm border-b border-[var(--color-hairline)] safe-area-top">
+    <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-[var(--color-canvas)]/95 backdrop-blur-sm border-b border-[var(--color-hairline)] safe-area-top">
       <div className="flex items-center justify-between h-14 px-4">
-        <h1 className="heading-sm text-[var(--color-ink)]">{title}</h1>
+        <h1 className="heading-sm text-[var(--color-ink)] truncate">{title}</h1>
         {action && <div>{action}</div>}
       </div>
     </header>

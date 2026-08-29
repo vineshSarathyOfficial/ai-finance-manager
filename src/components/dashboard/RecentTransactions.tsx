@@ -10,7 +10,7 @@ interface RecentTransactionsProps {
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   return (
     <div className="bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-hairline)] shadow-level-1 overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-hairline)]">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-[var(--color-hairline)]">
         <h2 className="title text-[var(--color-ink)]">Recent Transactions</h2>
         <Link
           href="/transactions"
