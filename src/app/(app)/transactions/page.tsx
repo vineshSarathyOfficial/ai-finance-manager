@@ -60,7 +60,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                 Import
               </Button>
             </Link>
-            <AddTransactionButton categories={categories} />
+            <AddTransactionButton />
           </div>
         }
       />

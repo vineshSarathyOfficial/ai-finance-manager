@@ -498,7 +498,8 @@ export function TransactionTable({
 
       {editTarget && (
         <TransactionFormModal
-          open={!!editTarget}
+          key={editTarget.id}
+          open
           onClose={() => setEditTarget(null)}
           categories={categories}
           mode="edit"

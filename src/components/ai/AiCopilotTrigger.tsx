@@ -15,14 +15,13 @@ export function AiCopilotTrigger() {
       aria-expanded={isOpen}
       aria-haspopup="dialog"
       className={cn(
-        "fixed z-40 transition-all active:scale-[0.97]",
-        "bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6",
+        "transition-all active:scale-[0.97]",
         "lg:flex lg:items-center lg:gap-2.5 lg:pl-2 lg:pr-4 lg:py-2",
         "lg:rounded-[var(--radius-full)] lg:bg-[var(--color-surface)] lg:border lg:border-[var(--color-hairline)] lg:shadow-level-2",
         "lg:hover:bg-[var(--color-canvas)]",
         "w-12 h-12 lg:w-auto lg:h-auto rounded-[var(--radius-full)]",
         "bg-[var(--color-primary)] lg:bg-[var(--color-surface)]",
-        "flex items-center justify-center"
+        "flex items-center justify-center shadow-level-2 lg:shadow-level-2"
       )}
       title="Ask FinPulse AI"
       aria-label="Ask FinPulse AI"
