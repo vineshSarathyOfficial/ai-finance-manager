@@ -6,6 +6,7 @@ import {
   createCategory as dbCreate,
   updateCategory as dbUpdate,
   deleteCategory as dbDelete,
+  getCategories,
 } from "@/lib/db/categories";
 import { z } from "zod";
 
@@ -19,6 +20,11 @@ type ActionState =
   | { success: true; message: string }
   | { success: false; message: string; errors?: Record<string, string[]> }
   | undefined;
+
+export async function getCategoriesAction() {
+  const userId = await getRequiredUserId();
+  return getCategories(userId);
+}
 
 export async function createCategoryAction(
   state: ActionState,

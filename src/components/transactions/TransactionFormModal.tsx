@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useActionState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import { createTransactionAction, updateTransactionAction } from "@/actions/transactions";
@@ -17,32 +18,53 @@ interface TransactionFormModalProps {
 
 const PAYMENT_METHODS = ["UPI", "Cash", "Credit Card", "Debit Card", "Net Banking", "Cheque", "Other"];
 
-export function TransactionFormModal({
-  open,
+interface TransactionFormModalContentProps {
+  onClose: () => void;
+  categories: Category[];
+  mode: "create" | "edit";
+  transaction?: SerializedTransaction;
+}
+
+function TransactionFormModalContent({
   onClose,
   categories,
   mode,
   transaction,
-}: TransactionFormModalProps) {
+}: TransactionFormModalContentProps) {
+  const router = useRouter();
   const action = mode === "create" ? createTransactionAction : updateTransactionAction;
   const [state, formAction, pending] = useActionState(action, undefined);
-  const formRef = useRef<HTMLFormElement>(null);
-  
-  // Initialize type based on transaction or default
-  const [type, setType] = useState<"INCOME" | "EXPENSE">(
-    () => transaction?.type ?? "EXPENSE"
-  );
+  const amountRef = useRef<HTMLInputElement>(null);
+  const [type, setType] = useState<"INCOME" | "EXPENSE">(() => transaction?.type ?? "EXPENSE");
+  const [formKey, setFormKey] = useState(0);
+  const addAnotherRef = useRef(false);
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
   useEffect(() => {
-    if (state?.success) {
-      toast.success(state.message);
-      onClose();
-    }
-  }, [state, onClose]);
+    amountRef.current?.focus();
+  }, [formKey]);
 
-  if (!open) return null;
+  useEffect(() => {
+    if (!state) return;
+
+    if (!state.success) {
+      addAnotherRef.current = false;
+      return;
+    }
+
+    toast.success(state.message);
+    router.refresh();
+
+    if (addAnotherRef.current && mode === "create") {
+      addAnotherRef.current = false;
+      setType("EXPENSE");
+      setFormKey((k) => k + 1);
+      return;
+    }
+
+    onClose();
+  }, [state, onClose, mode, router]);
 
   const err = (field: string) =>
     state && !state.success ? state.errors?.[field]?.[0] : undefined;
@@ -54,15 +76,12 @@ export function TransactionFormModal({
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="relative w-full sm:max-w-md bg-[var(--color-surface)] rounded-t-[var(--radius-xl)] sm:rounded-[var(--radius-xl)] border border-[var(--color-hairline)] shadow-level-2 max-h-[90dvh] overflow-y-auto safe-area-bottom">
-        {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[var(--color-hairline)] sticky top-0 bg-[var(--color-surface)] z-10">
           <h2 id="modal-title" className="title text-[var(--color-ink)]">
             {mode === "create" ? "Add Transaction" : "Edit Transaction"}
@@ -76,12 +95,11 @@ export function TransactionFormModal({
           </button>
         </div>
 
-        <form ref={formRef} action={formAction} className="px-6 py-5 space-y-4">
+        <form key={formKey} action={formAction} className="px-6 py-5 space-y-4">
           {mode === "edit" && (
             <input type="hidden" name="id" value={transaction?.id} />
           )}
 
-          {/* Type toggle */}
           <div>
             <label className="eyebrow text-[var(--color-ink-muted)] uppercase mb-2 block">
               Type
@@ -107,12 +125,12 @@ export function TransactionFormModal({
             <input type="hidden" name="type" value={type} />
           </div>
 
-          {/* Amount */}
           <div>
             <label htmlFor="tx-amount" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-1.5 block">
               Amount (₹)
             </label>
             <input
+              ref={amountRef}
               id="tx-amount"
               name="amount"
               type="number"
@@ -126,7 +144,6 @@ export function TransactionFormModal({
             {err("amount") && <p className="caption text-[var(--color-error)] mt-1">{err("amount")}</p>}
           </div>
 
-          {/* Description */}
           <div>
             <label htmlFor="tx-desc" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-1.5 block">
               Description
@@ -143,7 +160,6 @@ export function TransactionFormModal({
             {err("description") && <p className="caption text-[var(--color-error)] mt-1">{err("description")}</p>}
           </div>
 
-          {/* Category */}
           <div>
             <label htmlFor="tx-category" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-1.5 block">
               Category
@@ -165,7 +181,6 @@ export function TransactionFormModal({
             {err("categoryId") && <p className="caption text-[var(--color-error)] mt-1">{err("categoryId")}</p>}
           </div>
 
-          {/* Date */}
           <div>
             <label htmlFor="tx-date" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-1.5 block">
               Date
@@ -185,7 +200,6 @@ export function TransactionFormModal({
             {err("transactionDate") && <p className="caption text-[var(--color-error)] mt-1">{err("transactionDate")}</p>}
           </div>
 
-          {/* Payment Method */}
           <div>
             <label htmlFor="tx-payment" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-1.5 block">
               Payment Method <span className="normal-case font-normal text-[var(--color-ink-faint)]">(optional)</span>
@@ -203,7 +217,6 @@ export function TransactionFormModal({
             </select>
           </div>
 
-          {/* Notes */}
           <div>
             <label htmlFor="tx-notes" className="eyebrow text-[var(--color-ink-muted)] uppercase mb-1.5 block">
               Notes <span className="normal-case font-normal text-[var(--color-ink-faint)]">(optional)</span>
@@ -218,34 +231,47 @@ export function TransactionFormModal({
             />
           </div>
 
-          {/* Generic error */}
           {state && !state.success && !state.errors && (
             <p className="caption text-[var(--color-error)] bg-[var(--color-error-bg)] px-3 py-2 rounded-[var(--radius-md)]">
               {state.message}
             </p>
           )}
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 rounded-[var(--radius-full)] border border-[var(--color-hairline)] text-[var(--color-ink-secondary)] body-sm font-medium hover:bg-[var(--color-canvas-soft)] transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={pending}
-              id="tx-submit-btn"
-              className="flex-1 py-2.5 rounded-[var(--radius-full)] bg-[var(--color-primary)] text-white body-sm font-medium hover:bg-[var(--color-primary-active)] active:scale-[0.97] transition-all disabled:opacity-60"
-            >
-              {pending
-                ? "Saving…"
-                : mode === "create"
-                ? "Add Transaction"
-                : "Save Changes"}
-            </button>
+          <div className="flex flex-col gap-2 pt-1">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-2.5 rounded-[var(--radius-full)] border border-[var(--color-hairline)] text-[var(--color-ink-secondary)] body-sm font-medium hover:bg-[var(--color-canvas-soft)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={pending}
+                id="tx-submit-btn"
+                className="flex-1 py-2.5 rounded-[var(--radius-full)] bg-[var(--color-primary)] text-white body-sm font-medium hover:bg-[var(--color-primary-active)] active:scale-[0.97] transition-all disabled:opacity-60"
+              >
+                {pending
+                  ? "Saving…"
+                  : mode === "create"
+                  ? "Add Transaction"
+                  : "Save Changes"}
+              </button>
+            </div>
+
+            {mode === "create" && (
+              <button
+                type="submit"
+                disabled={pending}
+                onClick={() => {
+                  addAnotherRef.current = true;
+                }}
+                className="w-full py-2 text-[var(--color-primary)] body-sm font-medium hover:underline disabled:opacity-60"
+              >
+                Save & add another
+              </button>
+            )}
           </div>
         </form>
       </div>
@@ -253,4 +279,22 @@ export function TransactionFormModal({
   );
 }
 
-export default TransactionFormModal;
+export function TransactionFormModal({
+  open,
+  onClose,
+  categories,
+  mode,
+  transaction,
+}: TransactionFormModalProps) {
+  if (!open) return null;
+
+  return (
+    <TransactionFormModalContent
+      key={mode === "edit" ? transaction?.id : "create"}
+      onClose={onClose}
+      categories={categories}
+      mode={mode}
+      transaction={transaction}
+    />
+  );
+}

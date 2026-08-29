@@ -23,12 +23,14 @@ export function AddTransactionButton({ categories }: AddTransactionButtonProps) 
         <span className="hidden sm:inline">Add Transaction</span>
         <span className="sm:hidden">Add</span>
       </button>
-      <TransactionFormModal
-        open={open}
-        onClose={() => setOpen(false)}
-        categories={categories}
-        mode="create"
-      />
+      {open && (
+        <TransactionFormModal
+          open
+          onClose={() => setOpen(false)}
+          categories={categories}
+          mode="create"
+        />
+      )}
     </>
   );
 }

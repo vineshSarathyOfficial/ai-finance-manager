@@ -40,6 +40,13 @@ enum Frequency {
   YEARLY
 }
 
+enum InsightPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String?
@@ -61,6 +68,10 @@ model User {
   recurringTransactions RecurringTransaction[]
   accounts              Account[]
   budgets               Budget[]
+  insightReports        InsightReport[]
+  notificationPreference NotificationPreference?
+  pushSubscriptions     PushSubscription[]
+  notificationDeliveries NotificationDeliveryLog[]
 }
 
 model Account {
@@ -181,4 +192,64 @@ model Budget {
 
   @@unique([userId, categoryId])
   @@index([userId])
+}
+
+model InsightReport {
+  id          String        @id @default(cuid())
+  userId      String
+  period      InsightPeriod
+  periodKey   String
+  facts       Json
+  insights    Json
+  summaryText String?
+  generatedAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, period, periodKey])
+  @@index([userId, period, generatedAt])
+}
+
+model NotificationPreference {
+  userId               String  @id
+  timezone             String  @default("Asia/Kolkata")
+  pushEnabled          Boolean @default(false)
+  dailyEnabled         Boolean @default(true)
+  dailyTime            String  @default("21:30")
+  dailyWeekendsEnabled Boolean @default(true)
+  weeklyEnabled        Boolean @default(true)
+  weeklyDay            Int     @default(0)
+  weeklyTime           String  @default("20:00")
+  monthlyEnabled       Boolean @default(true)
+  monthlyDay           Int     @default(1)
+  monthlyTime          String  @default("09:00")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model NotificationDeliveryLog {
+  id        String        @id @default(cuid())
+  userId    String
+  period    InsightPeriod
+  periodKey String
+  channel   String        @default("push")
+  sentAt    DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, period, periodKey, channel])
+  @@index([userId, sentAt])
 }

@@ -25,12 +25,12 @@ export interface NavItem {
 export const primaryNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", mobileLabel: "Home", icon: LayoutDashboard, mobileTab: true },
   { href: "/transactions", label: "Transactions", mobileLabel: "Txns", icon: ArrowLeftRight, mobileTab: true },
-  { href: "/analytics", label: "Analytics", mobileLabel: "Analyse", icon: BarChart3, mobileTab: true },
+  { href: "/insights", label: "Insights", mobileLabel: "Insights", icon: Lightbulb, mobileTab: true },
   { href: "/subscriptions", label: "Recurring", mobileLabel: "Recurring", icon: RotateCcw, mobileTab: true },
 ];
 
 export const secondaryNavItems: NavItem[] = [
-  { href: "/insights", label: "Insights", icon: Lightbulb, moreMenu: true },
+  { href: "/analytics", label: "Analytics", icon: BarChart3, moreMenu: true },
   { href: "/accounts", label: "Accounts", icon: Wallet, moreMenu: true },
   { href: "/credit-cards", label: "Credit Cards", icon: CreditCard, moreMenu: true },
   { href: "/budgets", label: "Budgets", icon: Target, moreMenu: true },

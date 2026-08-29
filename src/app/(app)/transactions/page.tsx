@@ -60,7 +60,9 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                 Import
               </Button>
             </Link>
-            <AddTransactionButton categories={categories} />
+            <div className="hidden sm:block">
+              <AddTransactionButton categories={categories} />
+            </div>
           </div>
         }
       />

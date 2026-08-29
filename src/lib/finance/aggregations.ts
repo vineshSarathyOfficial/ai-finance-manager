@@ -170,7 +170,11 @@ export async function getAccountSpending(userId: string, dateFrom?: Date, dateTo
   return Array.from(byAccount.values()).sort((a, b) => b.amount - a.amount);
 }
 
-export async function getCreditCardSummary(userId: string) {
+export async function getCreditCardSummary(
+  userId: string,
+  dateFrom?: Date,
+  dateTo?: Date
+) {
   const ccAccounts = await prisma.account.findMany({
     where: { userId, type: "CREDIT_CARD" },
   });
@@ -183,8 +187,8 @@ export async function getCreditCardSummary(userId: string) {
   }
 
   const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
+  const monthStart = dateFrom ?? startOfMonth(now);
+  const monthEnd = dateTo ?? endOfMonth(now);
 
   const accountIds = ccAccounts.map((a) => a.id);
 

@@ -7,12 +7,11 @@ import {
   getCreditCardSummary,
 } from "@/lib/db/dashboard";
 import { getMonthOverMonthChange } from "@/lib/finance/metrics";
-import { generateInsights } from "@/lib/finance/insights";
 import { getRecentTransactions } from "@/lib/db/transactions";
 import { getRecurringSummary, getRecurringTransactions } from "@/actions/recurring";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { CashFlowHero } from "@/components/dashboard/CashFlowHero";
-import { InsightsList } from "@/components/dashboard/InsightsList";
+import { LatestInsightCard } from "@/components/dashboard/LatestInsightCard";
 import { MonthlyTrendChart } from "@/components/dashboard/MonthlyTrendChart";
 import { CategoryDonutChart } from "@/components/dashboard/CategoryDonutChart";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
@@ -27,13 +26,12 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default async function DashboardPage() {
   const userId = await getRequiredUserId();
 
-  const [summary, mom, trend, categorySpend, insights, recentTransactions, recurringSummary, recurringItems, ccSummary] =
+  const [summary, mom, trend, categorySpend, recentTransactions, recurringSummary, recurringItems, ccSummary] =
     await Promise.all([
       getDashboardSummary(userId),
       getMonthOverMonthChange(userId),
       getMonthlyTrend(userId, 6),
       getCategorySpend(userId),
-      generateInsights(userId, 3),
       getRecentTransactions(userId, 8),
       getRecurringSummary(userId),
       getRecurringTransactions(userId),
@@ -59,7 +57,7 @@ export default async function DashboardPage() {
 
       <CashFlowHero summary={summary} expenseChange={mom.expenseChange} />
 
-      {insights.length > 0 && <InsightsList insights={insights} compact />}
+      <LatestInsightCard />
 
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 lg:gap-6 items-start">
         <div className="xl:col-span-3 min-w-0">

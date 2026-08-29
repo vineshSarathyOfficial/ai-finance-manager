@@ -4,7 +4,9 @@ import { MobileHeader } from "@/components/layout/MobileHeader";
 import { AiCopilotProvider } from "@/components/ai/AiCopilotContext";
 import { AiCopilotTrigger } from "@/components/ai/AiCopilotTrigger";
 import { AiAdvisorDrawer } from "@/components/ai/AiAdvisorDrawer";
+import { AddTransactionFab } from "@/components/transactions/AddTransactionFab";
 import { NavigationProvider } from "@/components/layout/NavigationProgress";
+import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
 import { Toaster } from "sonner";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -21,6 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </main>
 
+          <AddTransactionFab />
           <AiCopilotTrigger />
           <AiAdvisorDrawer />
 
@@ -37,6 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               },
             }}
           />
+          <ServiceWorkerRegistration />
         </div>
       </NavigationProvider>
     </AiCopilotProvider>
