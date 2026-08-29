@@ -7,9 +7,12 @@ import { cn } from "@/lib/utils";
 import { logoutUser } from "@/actions/auth";
 import { Logo } from "@/components/ui/Logo";
 import { primaryNavItems, secondaryNavItems } from "./navConfig";
+import { AppNavLink } from "./AppNavLink";
+import { useDisplayPath } from "./NavigationProgress";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const displayPath = useDisplayPath() || pathname;
 
   return (
     <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-[var(--color-canvas)] border-r border-[var(--color-hairline)] fixed left-0 top-0 bottom-0 z-30">
@@ -21,9 +24,9 @@ export function Sidebar() {
 
       <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
         {primaryNavItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname.startsWith(href);
+          const active = displayPath.startsWith(href);
           return (
-            <Link
+            <AppNavLink
               key={href}
               href={href}
               className={cn(
@@ -40,7 +43,7 @@ export function Sidebar() {
                 )}
               />
               {label}
-            </Link>
+            </AppNavLink>
           );
         })}
 
@@ -49,9 +52,9 @@ export function Sidebar() {
         </div>
 
         {secondaryNavItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname.startsWith(href);
+          const active = displayPath.startsWith(href);
           return (
-            <Link
+            <AppNavLink
               key={href}
               href={href}
               className={cn(
@@ -63,7 +66,7 @@ export function Sidebar() {
             >
               <Icon className="w-4 h-4 flex-shrink-0 text-[var(--color-ink-faint)]" />
               {label}
-            </Link>
+            </AppNavLink>
           );
         })}
       </nav>

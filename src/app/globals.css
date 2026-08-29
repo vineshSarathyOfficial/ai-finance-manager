@@ -295,6 +295,18 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+
+  @keyframes nav-indeterminate {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(420%);
+    }
+  }
+  .animate-nav-indeterminate {
+    animation: nav-indeterminate 1s ease-in-out infinite;
+  }
 }
 
 @media (max-width: 1023px) {

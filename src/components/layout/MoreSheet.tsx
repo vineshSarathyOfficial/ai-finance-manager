@@ -1,12 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logoutUser } from "@/actions/auth";
 import { Sheet } from "@/components/ui/Sheet";
 import { moreMenuItems } from "./navConfig";
+import { AppNavLink } from "./AppNavLink";
+import { useDisplayPath } from "./NavigationProgress";
+import { useEffect } from "react";
 
 interface MoreSheetProps {
   open: boolean;
@@ -14,15 +16,21 @@ interface MoreSheetProps {
 }
 
 export function MoreSheet({ open, onClose }: MoreSheetProps) {
-  const pathname = usePathname();
+  const router = useRouter();
+  const displayPath = useDisplayPath();
+
+  useEffect(() => {
+    if (!open) return;
+    moreMenuItems.forEach((item) => router.prefetch(item.href));
+  }, [open, router]);
 
   return (
     <Sheet open={open} onClose={onClose} title="More">
       <nav className="space-y-1 -mt-2">
         {moreMenuItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname.startsWith(href);
+          const active = displayPath.startsWith(href);
           return (
-            <Link
+            <AppNavLink
               key={href}
               href={href}
               onClick={onClose}
@@ -35,7 +43,7 @@ export function MoreSheet({ open, onClose }: MoreSheetProps) {
             >
               <Icon className="w-5 h-5 text-[var(--color-ink-muted)]" />
               <span className="body-md">{label}</span>
-            </Link>
+            </AppNavLink>
           );
         })}
 
