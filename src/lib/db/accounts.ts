@@ -113,7 +113,30 @@ export async function getAccountBalances(userId: string) {
   return result;
 }
 
-export async function findOrCreateCreditCardAccount(userId: string, name?: string) {
+export async function findOrCreateCreditCardAccount(
+  userId: string,
+  options?: { name?: string; institution?: string }
+) {
+  if (options?.name) {
+    const byName = await prisma.account.findFirst({
+      where: {
+        userId,
+        type: "CREDIT_CARD",
+        name: options.name,
+      },
+    });
+    if (byName) return byName;
+
+    return prisma.account.create({
+      data: {
+        userId,
+        name: options.name,
+        type: "CREDIT_CARD",
+        institution: options.institution,
+      },
+    });
+  }
+
   const existing = await prisma.account.findFirst({
     where: { userId, type: "CREDIT_CARD" },
   });
@@ -122,7 +145,7 @@ export async function findOrCreateCreditCardAccount(userId: string, name?: strin
   return prisma.account.create({
     data: {
       userId,
-      name: name ?? "Credit Card",
+      name: "Credit Card",
       type: "CREDIT_CARD",
     },
   });

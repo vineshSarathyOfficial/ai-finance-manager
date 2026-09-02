@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getRequiredUserId } from "@/lib/auth/session";
-import { getTransactions } from "@/lib/db/transactions";
+import { getFilteredExpenseTotal, getTransactions } from "@/lib/db/transactions";
 import { getCategories } from "@/lib/db/categories";
 import { getAccounts } from "@/lib/db/accounts";
 import { transactionFiltersSchema } from "@/lib/validations/transaction";
@@ -35,16 +35,19 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
     sortOrder: sp.sortOrder,
   });
 
-  const [{ transactions, total, pageCount }, categories, accounts] = await Promise.all([
-    getTransactions(userId, filters),
-    getCategories(userId),
-    getAccounts(userId),
-  ]);
+  const [{ transactions, total, pageCount }, categories, accounts, totalExpenses] =
+    await Promise.all([
+      getTransactions(userId, filters),
+      getCategories(userId),
+      getAccounts(userId),
+      getFilteredExpenseTotal(userId, filters),
+    ]);
 
   return (
     <TransactionsView
       initialTransactions={transactions}
       initialTotal={total}
+      initialTotalExpenses={totalExpenses}
       pageCount={pageCount}
       categories={categories}
       accounts={accounts}

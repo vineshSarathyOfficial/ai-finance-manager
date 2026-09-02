@@ -41,6 +41,10 @@ async function main() {
       where: { userId: user.id, type: "CREDIT_CARD" },
     });
 
+    const ccAccounts = await prisma.account.findMany({
+      where: { userId: user.id, type: "CREDIT_CARD" },
+    });
+
     const txs = await prisma.transaction.findMany({
       where: { userId: user.id },
       select: {
@@ -61,14 +65,23 @@ async function main() {
       let accountId = tx.accountId;
       if (!accountId) {
         if (tx.paymentMethod?.toLowerCase().includes("credit card")) {
-          if (!ccAccount) {
+          if (ccAccounts.length === 0) {
             ccAccount = await prisma.account.create({
               data: { userId: user.id, name: "Credit Card", type: "CREDIT_CARD" },
             });
+            ccAccounts.push(ccAccount);
           }
-          accountId = ccAccount.id;
+          accountId = ccAccounts[0].id;
         } else {
           accountId = defaultAccount.id;
+        }
+      } else if (
+        tx.paymentMethod?.toLowerCase().includes("credit card") &&
+        ccAccounts.length > 0
+      ) {
+        const assigned = ccAccounts.find((a) => a.id === accountId);
+        if (!assigned && accountId === defaultAccount.id) {
+          accountId = ccAccounts[0].id;
         }
       }
 

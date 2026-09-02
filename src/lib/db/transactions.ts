@@ -60,6 +60,18 @@ function buildWhere(userId: string, filters: TransactionFilters): Prisma.Transac
   };
 }
 
+export async function getFilteredExpenseTotal(userId: string, filters: TransactionFilters) {
+  const where = buildWhere(userId, filters);
+  if (filters.type === "INCOME") return 0;
+
+  const result = await prisma.transaction.aggregate({
+    where: { ...where, type: "EXPENSE" },
+    _sum: { amount: true },
+  });
+
+  return result._sum.amount?.toNumber() ?? 0;
+}
+
 export async function getTransactions(userId: string, filters: TransactionFilters) {
   const { page, pageSize, sortBy, sortOrder } = filters;
   const where = buildWhere(userId, filters);

@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
+import { TransactionTotalsBar } from "@/components/transactions/TransactionTotalsBar";
 import { AddTransactionButton } from "@/components/transactions/AddTransactionButton";
 import {
   TRANSACTION_OPTIMISTIC_EVENT,
@@ -23,6 +24,7 @@ import {
   transactionsMatch,
   type OptimisticTransaction,
 } from "@/lib/transactions/optimistic";
+import { matchesTransactionFilters } from "@/lib/transactions/filter-match";
 import type { Account, Category, SerializedTransaction } from "@/types/finance";
 import type { TransactionFilters as TransactionFiltersType } from "@/lib/validations/transaction";
 
@@ -55,7 +57,8 @@ function collectRemovalIds(list: OptimisticTransaction[], target: OptimisticTran
 }
 function mergeTransactions(
   initialTransactions: SerializedTransaction[],
-  deletedIds: Set<string>
+  deletedIds: Set<string>,
+  filters: TransactionFiltersType
 ) {
   const pending = getPendingOptimisticTransactions();
   let merged = stripStaleOptimistic(
@@ -66,6 +69,7 @@ function mergeTransactions(
 
   for (const opt of pending) {
     if (deletedIds.has(opt.id)) continue;
+    if (!matchesTransactionFilters(opt, filters)) continue;
     if (
       opt.id.startsWith("optimistic-") &&
       initialTransactions.some((saved) => transactionsMatch(opt, saved))
@@ -87,6 +91,7 @@ function mergeTransactions(
 interface TransactionsViewProps {
   initialTransactions: SerializedTransaction[];
   initialTotal: number;
+  initialTotalExpenses: number;
   pageCount: number;
   categories: Category[];
   accounts: Account[];
@@ -96,6 +101,7 @@ interface TransactionsViewProps {
 export function TransactionsView({
   initialTransactions,
   initialTotal,
+  initialTotalExpenses,
   pageCount,
   categories,
   accounts,
@@ -103,36 +109,46 @@ export function TransactionsView({
 }: TransactionsViewProps) {
   const [deletedIds, setDeletedIds] = useState<Set<string>>(() => new Set());
   const [transactions, setTransactions] = useState<OptimisticTransaction[]>(() => {
-    return mergeTransactions(initialTransactions, new Set()).merged;
+    return mergeTransactions(initialTransactions, new Set(), filters).merged;
   });
   const [total, setTotal] = useState(() => {
-    const { extraCount } = mergeTransactions(initialTransactions, new Set());
+    const { extraCount } = mergeTransactions(initialTransactions, new Set(), filters);
     return initialTotal + extraCount;
   });
 
   useEffect(() => {
-    const { merged, extraCount } = mergeTransactions(initialTransactions, deletedIds);
+    const { merged, extraCount } = mergeTransactions(initialTransactions, deletedIds, filters);
     setTransactions(merged);
     setTotal(initialTotal + extraCount);
-  }, [initialTransactions, initialTotal, deletedIds]);
+  }, [initialTransactions, initialTotal, deletedIds, filters]);
 
-  const applyOptimistic = useCallback((transaction: OptimisticTransaction, mode: "create" | "edit") => {
-    setTransactions((prev) => {
-      if (mode === "edit") {
-        return prev.map((t) => (t.id === transaction.id ? transaction : t));
+  const applyOptimistic = useCallback(
+    (transaction: OptimisticTransaction, mode: "create" | "edit") => {
+      setTransactions((prev) => {
+        if (mode === "edit") {
+          if (!matchesTransactionFilters(transaction, filters)) {
+            return prev.filter((t) => t.id !== transaction.id);
+          }
+          return prev.map((t) => (t.id === transaction.id ? transaction : t));
+        }
+        if (!matchesTransactionFilters(transaction, filters)) return prev;
+        if (prev.some((t) => t.id === transaction.id)) return prev;
+        return [transaction, ...prev];
+      });
+      if (mode === "create" && matchesTransactionFilters(transaction, filters)) {
+        setTotal((t) => t + 1);
       }
-      if (prev.some((t) => t.id === transaction.id)) return prev;
-      return [transaction, ...prev];
-    });
-    if (mode === "create") {
-      setTotal((t) => t + 1);
-    }
-  }, []);
+    },
+    [filters]
+  );
 
   const revertOptimistic = useCallback(
     (id: string, mode: "create" | "edit", previous?: OptimisticTransaction) => {
       setTransactions((prev) => {
         if (previous) {
+          if (!matchesTransactionFilters(previous, filters)) {
+            return prev.filter((t) => t.id !== id);
+          }
           return prev.map((t) => (t.id === id ? previous : t));
         }
         return prev.filter((t) => t.id !== id);
@@ -141,7 +157,7 @@ export function TransactionsView({
         setTotal((t) => Math.max(0, t - 1));
       }
     },
-    []
+    [filters]
   );
 
   const confirmTransaction = useCallback(
@@ -155,15 +171,21 @@ export function TransactionsView({
             if (transactionsMatch(t, transaction)) return false;
             return true;
           });
+          if (!matchesTransactionFilters(transaction, filters)) {
+            return cleaned;
+          }
           if (cleaned.some((t) => t.id === transaction.id)) return cleaned;
           return [{ ...transaction, isPending: false }, ...cleaned];
+        }
+        if (!matchesTransactionFilters(transaction, filters)) {
+          return prev.filter((t) => t.id !== transaction.id);
         }
         return prev.map((t) =>
           t.id === transaction.id ? { ...transaction, isPending: false } : t
         );
       });
     },
-    []
+    [filters]
   );
 
   useEffect(() => {
@@ -226,12 +248,13 @@ export function TransactionsView({
       next.delete(transaction.id);
       return next;
     });
+    if (!matchesTransactionFilters(transaction, filters)) return;
     setTransactions((prev) => {
       if (prev.some((t) => t.id === transaction.id)) return prev;
       return [{ ...transaction, isPending: false }, ...prev];
     });
     setTotal((t) => t + 1);
-  }, []);
+  }, [filters]);
 
   const handleBulkDeleted = useCallback((targets: OptimisticTransaction[]) => {
     setTransactions((prev) => {
@@ -277,6 +300,12 @@ export function TransactionsView({
       />
 
       <TransactionFilters categories={categories} accounts={accounts} filters={filters} />
+
+      <TransactionTotalsBar
+        totalExpenses={initialTotalExpenses}
+        transactionCount={total}
+        filters={filters}
+      />
 
       <TransactionTable
         transactions={transactions}

@@ -198,53 +198,50 @@ export async function getCreditCardSummary(
   dateFrom?: Date,
   dateTo?: Date
 ) {
-  const ccAccounts = await prisma.account.findMany({
-    where: { userId, type: "CREDIT_CARD" },
-  });
+  const { getCreditCardAccounts, computeCardMetrics } = await import(
+    "@/lib/finance/credit-cards"
+  );
 
-  if (ccAccounts.length === 0) {
-    const ccTxs = await prisma.transaction.count({
-      where: { userId, paymentMethod: { contains: "Credit Card", mode: "insensitive" } },
-    });
-    if (ccTxs === 0) return null;
-  }
+  const accounts = await getCreditCardAccounts(userId);
+  if (accounts.length === 0) return null;
 
   const now = new Date();
   const monthStart = dateFrom ?? startOfMonth(now);
   const monthEnd = dateTo ?? endOfMonth(now);
 
-  const accountIds = ccAccounts.map((a) => a.id);
+  const cards = await Promise.all(
+    accounts.map(async (account) => {
+      const metrics = await computeCardMetrics(account, userId);
+      const monthTxs = await prisma.transaction.findMany({
+        where: {
+          userId,
+          accountId: account.id,
+          type: "EXPENSE",
+          transactionDate: { gte: monthStart, lte: monthEnd },
+          excludeFromTotals: false,
+          transactionKind: { notIn: EXCLUDED_KINDS },
+        },
+        select: { amount: true },
+      });
+      const amount = monthTxs.reduce((s, t) => s + t.amount.toNumber(), 0);
+      return {
+        id: account.id,
+        name: account.name,
+        amount,
+        outstanding: metrics.currentOutstanding,
+        utilizationPct: metrics.utilizationPct,
+        creditLimit: metrics.creditLimit,
+      };
+    })
+  );
 
-  const whereClause = accountIds.length > 0
-    ? { userId, accountId: { in: accountIds } }
-    : { userId, paymentMethod: { contains: "Credit Card", mode: "insensitive" as const } };
-
-  const monthTxs = await prisma.transaction.findMany({
-    where: {
-      ...whereClause,
-      type: "EXPENSE",
-      transactionDate: { gte: monthStart, lte: monthEnd },
-      excludeFromTotals: false,
-      transactionKind: { notIn: EXCLUDED_KINDS },
-    },
-    select: { amount: true, accountId: true, account: { select: { name: true } } },
-  });
-
-  const totalSpend = monthTxs.reduce((s, t) => s + t.amount.toNumber(), 0);
-
-  const byCard = new Map<string, { name: string; amount: number }>();
-  for (const t of monthTxs) {
-    const name = t.account?.name ?? "Credit Card";
-    const key = t.accountId ?? "default";
-    const e = byCard.get(key);
-    if (e) e.amount += t.amount.toNumber();
-    else byCard.set(key, { name, amount: t.amount.toNumber() });
-  }
+  const totalSpend = cards.reduce((s, c) => s + c.amount, 0);
 
   return {
     totalSpend,
-    cards: Array.from(byCard.entries()).map(([id, data]) => ({ id, ...data })),
-    cardCount: Math.max(ccAccounts.length, byCard.size),
+    cards,
+    cardCount: cards.length,
+    totalOutstanding: cards.reduce((s, c) => s + c.outstanding, 0),
   };
 }
 

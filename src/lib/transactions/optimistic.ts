@@ -47,6 +47,7 @@ export function buildOptimisticTransaction(
     merchantName: description,
     transactionKind: existing?.transactionKind ?? "REGULAR",
     linkedTransactionId: null,
+    emiId: existing?.emiId ?? null,
     excludeFromTotals: false,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,

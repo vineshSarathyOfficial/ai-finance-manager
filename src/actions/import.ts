@@ -72,6 +72,7 @@ export interface CommitImportPayload {
   source?: string;
   accountId?: string;
   isCreditCard?: boolean;
+  creditCardName?: string;
   transactions: CommitTransactionPayload[];
   totalDuplicatesDetected?: number;
 }
@@ -87,7 +88,9 @@ export async function commitImportAction(payload: CommitImportPayload) {
     let accountId = payload.accountId;
     if (!accountId) {
       const account = payload.isCreditCard
-        ? await findOrCreateCreditCardAccount(userId)
+        ? await findOrCreateCreditCardAccount(userId, {
+            name: payload.creditCardName,
+          })
         : await getOrCreateDefaultAccount(userId);
       accountId = account.id;
     }
@@ -129,6 +132,7 @@ export async function commitImportAction(payload: CommitImportPayload) {
     revalidatePath("/transactions");
     revalidatePath("/analytics");
     revalidatePath("/import");
+    revalidatePath("/credit-cards");
 
     return {
       success: true,

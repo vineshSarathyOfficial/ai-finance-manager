@@ -2,16 +2,34 @@ import Link from "next/link";
 import { CreditCard, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/utils";
+import { CreditUtilizationBar } from "@/components/credit-cards/CreditUtilizationBar";
 
 interface CreditCardSummaryWidgetProps {
   summary: {
     totalSpend: number;
-    cards: Array<{ id: string; name: string; amount: number }>;
+    totalOutstanding?: number;
+    cards: Array<{
+      id: string;
+      name: string;
+      amount: number;
+      outstanding?: number;
+      utilizationPct?: number | null;
+      creditLimit?: number | null;
+    }>;
     cardCount: number;
   };
 }
 
 export function CreditCardSummaryWidget({ summary }: CreditCardSummaryWidgetProps) {
+  const hasLimits = summary.cards.some((c) => c.creditLimit != null && c.creditLimit > 0);
+  const totalLimit = summary.cards.reduce((s, c) => s + (c.creditLimit ?? 0), 0);
+  const totalOutstanding =
+    summary.totalOutstanding ?? summary.cards.reduce((s, c) => s + (c.outstanding ?? 0), 0);
+  const overallUtil =
+    hasLimits && totalLimit > 0
+      ? Math.round((totalOutstanding / totalLimit) * 1000) / 10
+      : null;
+
   return (
     <Card padding="md">
       <div className="flex items-center justify-between gap-3 mb-4">
@@ -27,20 +45,32 @@ export function CreditCardSummaryWidget({ summary }: CreditCardSummaryWidgetProp
         </Link>
       </div>
 
-      <p className="display-md text-[var(--color-ink)] mb-3 break-words">
-        {formatCurrency(summary.totalSpend)}
-        <span className="body-sm text-[var(--color-ink-muted)] font-normal ml-2">this month</span>
-      </p>
+      {hasLimits ? (
+        <>
+          <p className="display-md text-[var(--color-ink)] mb-1 break-words body-tabular">
+            {formatCurrency(totalOutstanding)}
+            <span className="body-sm text-[var(--color-ink-muted)] font-normal ml-2">outstanding</span>
+          </p>
+          <CreditUtilizationBar utilizationPct={overallUtil} className="mb-3" />
+        </>
+      ) : (
+        <p className="display-md text-[var(--color-ink)] mb-3 break-words body-tabular">
+          {formatCurrency(summary.totalSpend)}
+          <span className="body-sm text-[var(--color-ink-muted)] font-normal ml-2">this month</span>
+        </p>
+      )}
 
       <div className="space-y-2">
         {summary.cards.slice(0, 3).map((card) => (
           <Link
             key={card.id}
-            href={`/credit-cards?cardId=${card.id}`}
+            href={`/credit-cards/${card.id}`}
             className="flex items-center justify-between py-2 border-t border-[var(--color-hairline-soft)] first:border-0"
           >
             <span className="body-sm text-[var(--color-ink)]">{card.name}</span>
-            <span className="body-sm font-medium text-[var(--color-ink)]">{formatCurrency(card.amount)}</span>
+            <span className="body-sm font-medium text-[var(--color-ink)] body-tabular">
+              {formatCurrency(card.outstanding ?? card.amount)}
+            </span>
           </Link>
         ))}
       </div>
