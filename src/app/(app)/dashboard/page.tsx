@@ -10,6 +10,7 @@ import { getMonthOverMonthChange } from "@/lib/finance/metrics";
 import { getRecentTransactions } from "@/lib/db/transactions";
 import { getRecurringSummary, getRecurringTransactions } from "@/actions/recurring";
 import { getSavingsGoals } from "@/lib/db/goals";
+import { getInvestments, computeInvestmentSummary } from "@/lib/db/investments";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { CashFlowHero } from "@/components/dashboard/CashFlowHero";
 import { LatestInsightCard } from "@/components/dashboard/LatestInsightCard";
@@ -18,6 +19,7 @@ import { CategoryDonutChart } from "@/components/dashboard/CategoryDonutChart";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { RecurringWidget } from "@/components/dashboard/RecurringWidget";
 import { SavingsGoalsWidget } from "@/components/dashboard/SavingsGoalsWidget";
+import { InvestmentsWidget } from "@/components/dashboard/InvestmentsWidget";
 import { CreditCardSummaryWidget } from "@/components/dashboard/CreditCardSummaryWidget";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +30,7 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default async function DashboardPage() {
   const userId = await getRequiredUserId();
 
-  const [summary, mom, trend, categorySpend, recentTransactions, recurringSummary, recurringItems, ccSummary, savingsGoals] =
+  const [summary, mom, trend, categorySpend, recentTransactions, recurringSummary, recurringItems, ccSummary, savingsGoals, investments] =
     await Promise.all([
       getDashboardSummary(userId),
       getMonthOverMonthChange(userId),
@@ -39,7 +41,10 @@ export default async function DashboardPage() {
       getRecurringTransactions(userId),
       getCreditCardSummary(userId),
       getSavingsGoals(userId),
+      getInvestments(userId),
     ]);
+
+  const investmentSummary = computeInvestmentSummary(investments);
 
   const monthLabel = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric" }).format(new Date());
 
@@ -84,7 +89,10 @@ export default async function DashboardPage() {
         <RecentTransactions transactions={recentTransactions} />
       )}
       <RecurringWidget summary={recurringSummary} topItems={recurringItems.slice(0, 5)} />
-      <SavingsGoalsWidget goals={savingsGoals} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        <InvestmentsWidget investments={investments} summary={investmentSummary} />
+        <SavingsGoalsWidget goals={savingsGoals} />
+      </div>
     </div>
   );
 }

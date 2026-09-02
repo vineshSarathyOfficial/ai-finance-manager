@@ -26,7 +26,13 @@ function createPrismaClient(): PrismaClient {
 
 /** Detect stale global Prisma client after `prisma generate` without dev server restart */
 function isStalePrismaClient(client: PrismaClient): boolean {
-  return !("savingsGoal" in client) || !("categoryRule" in client) || !("transactionSplit" in client);
+  return (
+    !("savingsGoal" in client) ||
+    !("categoryRule" in client) ||
+    !("transactionSplit" in client) ||
+    !("creditCardEmi" in client) ||
+    !("investment" in client)
+  );
 }
 
 function getPrismaClient(): PrismaClient {
